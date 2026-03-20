@@ -8,7 +8,7 @@
 [![Kernel](https://img.shields.io/badge/kernel-%E2%89%A55.8-red.svg)](https://kernel.org)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8.svg)](https://go.dev)
 
---->
+--- >< ...
 
 ## What this is
 
@@ -19,7 +19,7 @@ This is different from Falco or Tetragon in one specific way: every alert says *
 > **Status:** Build 1 in progress — kernel tracer and Go daemon v1.  
 > Demo videos, benchmark results, and SSRN pre-print will be linked here as each build phase completes.
 
---->
+--- >< ---
 
 ## Demo videos
 
@@ -29,7 +29,7 @@ This is different from Falco or Tetragon in one specific way: every alert says *
 | Reverse shell detection | connect() then execve(/bin/bash) within 500ms → REVERSE\_SHELL alert | Coming — Build 4 |
 | LSTM anomaly spike | 5 min normal baseline → malicious syscall injection → score spike above θ | Coming — Build 4 |
 
---->
+--- >< ---
 
 ## System architecture
 
@@ -38,7 +38,7 @@ This is different from Falco or Tetragon in one specific way: every alert says *
 
 Four layers: Linux kernel instrumented via eBPF → Go daemon processing events concurrently → ML detection engine → Kubernetes DaemonSet output. Same deployment pattern as Falco and Tetragon.
 
---->
+--- >< ---
 
 ## eBPF data flow
 
@@ -47,7 +47,7 @@ Four layers: Linux kernel instrumented via eBPF → Go daemon processing events 
 
 Single syscall event lifecycle: tracepoint fires → BPF ring buffer → five Go goroutines → ML inference → explainable JSON alert.
 
---->
+--- >< ---
 
 ## Go goroutine pipeline
 
@@ -56,7 +56,7 @@ Single syscall event lifecycle: tracepoint fires → BPF ring buffer → five Go
 
 Five goroutines connected by typed Go channels. No shared memory, no locks. Fan-out at Feature Extractor (FeatureVector → Rule Engine and ML Engine in parallel). Fan-in at Exporter (Alert + ModelScores → final JSON).
 
---->
+--- >< ---
 
 ## How it works
 
@@ -142,7 +142,7 @@ Every alert includes what happened, where it happened, and why it is abnormal �
 }
 ```
 
---->
+--- >< ---
 
 ## Evaluation design
 
@@ -182,7 +182,7 @@ Benchmarks run on UP IT lab machines. Laptop numbers are not valid research data
 | Concept drift | Evolving workloads generate false positives | `ContainerBaseline` uses a rolling window — re-stabilises after N windows |
 | eBPF program tampering | Container with `CAP_SYS_ADMIN` can interfere with ring buffer | DaemonSet enforces `allowPrivilegeEscalation: false`, `capabilities: drop: ALL` |
 
---->
+--- >< ---
 
 ## Repository structure
 
@@ -225,7 +225,7 @@ sentinel-ebpf/
 └── paper/preprint.md                ← SSRN DOI link (September 2026)
 ```
 
---->
+--- >< ---
 
 ## Quick start
 
@@ -257,7 +257,7 @@ The daemon writes structured JSON alerts to stdout. Pipe to `jq` for readable ou
 sudo ./sentinel | jq .
 ```
 
---->
+--- >< ---
 
 ## Technology stack
 
@@ -272,7 +272,7 @@ sudo ./sentinel | jq .
 | CI/CD | GitHub Actions |
 | Deployment | Kubernetes DaemonSet |
 
---->
+--- >< ---
 
 ## Build status
 
@@ -285,7 +285,7 @@ sudo ./sentinel | jq .
 | Build 4 | Performance benchmarks + Kubernetes DaemonSet + Loom videos | Planned — July |
 | Build 5 | Open source contributions (Tetragon/Tracee/Falco PRs) | Parallel — June–Aug |
 
---->
+--- >< ---
 
 ## Research context
 
@@ -298,7 +298,7 @@ sudo ./sentinel | jq .
 
 **Hypothesis:** Kernel-level syscall telemetry provides sufficiently rich behavioural signals to enable unsupervised anomaly detection models to identify deviations from normal container execution with acceptable accuracy and minimal overhead.
 
---->
+--- >< ---
 
 ## Related work in this repository
 
@@ -311,7 +311,7 @@ This project is the fourth in a progression:
 | [SecureSME (v0)](https://github.com/Murashidzi) | eBPF concept validation: hooked sys\_execve, captured kernel events, validated against reverse shells. Documented limits that sentinel-eBPF fixes. |
 | **sentinel-ebpf (this repo)** | The synthesis: C kernel programs, Go concurrent daemon, three-model ML, Kubernetes DaemonSet, production benchmarks |
 
---->
+--- >< ---
 
 ## License
 
