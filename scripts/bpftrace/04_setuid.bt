@@ -1,0 +1,10 @@
+// Script 04: Trace privilege escalation attempts (setuid syscall)
+// Captures: PID, process name, new UID being requested
+// Research purpose: detect setuid(0) privilege escalation inside containers
+// Usage: sudo bpftrace scripts/bpftrace/04_setuid.bt
+
+tracepoint:syscalls:sys_enter_setuid
+{
+    printf("PID: %-6d  COMM: %-16s  NEW_UID: %d\n",
+           pid, comm, args->uid);
+}

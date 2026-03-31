@@ -1,0 +1,10 @@
+// Script 01: Trace process executions (execve syscall)
+// Captures: PID, process name, binary being executed
+// Research purpose: detect reverse shells, recon tools, LotL binaries
+// Usage: sudo bpftrace scripts/bpftrace/01_execve.bt
+
+tracepoint:syscalls:sys_enter_execve
+{
+    printf("PID: %-6d  COMM: %-16s  FILE: %s\n",
+           pid, comm, str(args->filename));
+}

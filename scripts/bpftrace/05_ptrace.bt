@@ -1,0 +1,10 @@
+// Script 05: Trace process inspection (ptrace syscall)
+// Captures: PID, process name, ptrace request type
+// Research purpose: detect debugger-based injection and memory inspection attacks
+// Usage: sudo bpftrace scripts/bpftrace/05_ptrace.bt
+
+tracepoint:syscalls:sys_enter_ptrace
+{
+    printf("PID: %-6d  COMM: %-16s  REQUEST: %d\n",
+           pid, comm, args->request);
+}

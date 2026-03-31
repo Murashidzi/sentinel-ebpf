@@ -1,0 +1,10 @@
+// Script 02: Trace file opens (openat syscall)
+// Captures: PID, process name, filename being opened
+// Research purpose: detect /etc/passwd reads, /proc/1/ns/* access (container escape)
+// Usage: sudo bpftrace scripts/bpftrace/02_openat.bt
+
+tracepoint:syscalls:sys_enter_openat
+{
+    printf("PID: %-6d  COMM: %-16s  FILE: %s\n",
+           pid, comm, str(args->filename));
+}

@@ -1,0 +1,10 @@
+// Script 03: Trace outbound TCP connections (tcp_connect kprobe)
+// Captures: PID, process name initiating the connection
+// Research purpose: detect C2 callbacks, port scans, data exfiltration
+// Usage: sudo bpftrace scripts/bpftrace/03_connect.bt
+
+kprobe:tcp_connect
+{
+    printf("PID: %-6d  COMM: %-16s  initiating TCP connect\n",
+           pid, comm);
+}
