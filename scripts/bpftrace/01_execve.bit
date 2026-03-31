@@ -1,9 +1,0 @@
-// Trace all process executions system-wide
-// Shows: PID, process name, binary being executed
-// Run: sudo bpftrace scripts/bpftrace/01_execve.bt
-
-tracepoint:syscalls:sys_enter_execve
-{
-    print("PID: %-6d COMM: %-16s FILE: %s\n",
-        pid, comm, str(args->filename));
-}
