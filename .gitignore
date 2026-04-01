@@ -1,0 +1,33 @@
+# Dowloaded installers and archives
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+
+# Go build artifacts
+daemon/sentinel
+daemon/*.test
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+ml/__pycache__/
+*.egg-info/
+
+# ML model files (too large for git)
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.h5
+
+# eBPF compiled objects
+*.o
+*.bpf.o
+
+# OS artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
