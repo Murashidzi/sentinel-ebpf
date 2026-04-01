@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install eBPF build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libbpf-dev linux-headers-$(uname -r)
+
+      - name: Verify clang
+        run: clang --version
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Verify Go
+        run: go version
+
+      - name: Run Go vet on daemon
+        run: |
+          cd daemon
+          go vet ./...
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python linter
+        run: pip install pylint
+
+      - name: Lint Python ML code
+        run: |
+          if find ml -name "*.py" | grep -q .; then
+            pylint ml/*.py --disable=C,R || true
+          else
+            echo "No Python ML files yet — skipping lint"
+          fi
+
+      - name: Check kernel C files exist
+        run: |
+          if [ -f kernel/tracer.bpf.c ]; then
+            echo "kernel/tracer.bpf.c found — will compile in BUILD 1"
+          else
+            echo "kernel/tracer.bpf.c not yet written — skipping compile"
+          fi

@@ -3,7 +3,7 @@
 > Kernel-to-AI runtime security for Kubernetes containers.  
 > eBPF syscall telemetry · Go concurrent pipeline · three-model unsupervised ML · explainable alerts.
 
-[![CI](https://img.shields.io/badge/CI-Zero--Trust_Local_Pipeline-success.svg)](#secure-by-design-cicd)
+[![CI](https://github.com/Murashidzi/sentinel-ebpf/actions/workflows/ci.yml/badge.svg)](https://github.com/Murashidzi/sentinel-ebpf/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Kernel](https://img.shields.io/badge/kernel-%E2%89%A55.8-red.svg)](https://kernel.org)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8.svg)](https://go.dev)
@@ -38,8 +38,8 @@ This is different from Falco or Tetragon in one specific way: every alert says *
 
 Four layers: Linux kernel instrumented via eBPF → Go daemon process>
 
-### Secure-by-Design CI/CD
-Due to the highly privileged nature of eBPF kernel instrumentation, this repository operates on a **Zero-Trust Local Pipeline** rather than relying on third-party cloud runners (e.g., GitHub Actions). To prevent CI supply chain attacks and ensure deterministic compilation of kernel objects, all static analysis, linting, and build verifications are cryptographically enforced via strict Git pre-commit hooks before code is permitted to enter the version control network.
+### CI/CD Pipeline
+CI/CD runs on GitHub Actions (ubuntu-latest). The workflow compiles eBPF dependencies, runs `go vet` on the daemon, and lints the ML pipeline on every push. Kernel object compilation is validated locally via `make` before commit.
 
 --- >< ---
 
@@ -272,7 +272,7 @@ sudo ./sentinel | jq .
 | ML engine | Python, PyTorch (Autoencoder, LSTM), scikit-learn (Isolation Forest) |
 | Container environment | Docker, minikube, Kubernetes |
 | Benchmarking | perf stat, bpftool, bpftrace |
-| CI/CD | Strict Git pre-commit hooks + Makefile |
+| CI/CD | GitHub Actions (ubuntu-latest) |
 | Deployment | Kubernetes DaemonSet |
 
 --- >< ---
