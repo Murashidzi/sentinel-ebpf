@@ -53,10 +53,14 @@ jobs:
             echo "No Python ML files yet — skipping lint"
           fi
 
-      - name: Check kernel C files exist
+      - name: Compile eBPF kernel object
         run: |
           if [ -f kernel/tracer.bpf.c ]; then
-            echo "kernel/tracer.bpf.c found — will compile in BUILD 1"
+            echo "Compiling kernel/tracer.bpf.c..."
+            cd kernel
+            bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
+            clang -O2 -g -target bpf -D__TARGET_ARCH_x86               -c tracer.bpf.c -o tracer.bpf.o
+            echo "Compilation successful: $(ls -lh tracer.bpf.o)"
           else
             echo "kernel/tracer.bpf.c not yet written — skipping compile"
           fi
