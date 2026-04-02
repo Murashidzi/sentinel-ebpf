@@ -31,3 +31,5 @@ ml/__pycache__/
 .idea/
 *.swp
 *.swo
+kernel/vmlinux.h
+kernel/*.o
