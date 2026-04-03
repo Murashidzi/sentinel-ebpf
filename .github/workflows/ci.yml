@@ -6,11 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout repository
@@ -19,7 +20,7 @@ jobs:
       - name: Install eBPF build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang llvm libbpf-dev linux-headers-$(uname -r)
+          sudo apt-get install -y clang llvm libbpf-dev linux-headers-$(uname -r) bpftool
 
       - name: Verify clang
         run: clang --version
@@ -28,14 +29,13 @@ jobs:
         uses: actions/setup-go@v5.4.0
         with:
           go-version: '1.22'
+          cache-dependency-path: daemon/go.sum
 
       - name: Verify Go
         run: go version
 
       - name: Run Go vet on daemon
-        run: |
-          cd daemon
-          go vet ./...
+        run: cd daemon && go vet ./...
 
       - name: Set up Python
         uses: actions/setup-python@v5.5.0
@@ -56,11 +56,12 @@ jobs:
       - name: Compile eBPF kernel object
         run: |
           if [ -f kernel/tracer.bpf.c ]; then
+            echo "Generating vmlinux.h from running kernel BTF..."
+            bpftool btf dump file /sys/kernel/btf/vmlinux format c > kernel/vmlinux.h
             echo "Compiling kernel/tracer.bpf.c..."
-            cd kernel
-            bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
-            clang -O2 -g -target bpf -D__TARGET_ARCH_x86               -c tracer.bpf.c -o tracer.bpf.o
-            echo "Compilation successful: $(ls -lh tracer.bpf.o)"
+            clang -O2 -g -target bpf -D__TARGET_ARCH_x86 -c kernel/tracer.bpf.c -o kernel/tracer.bpf.o
+            echo "Compilation successful:"
+            ls -lh kernel/tracer.bpf.o
           else
-            echo "kernel/tracer.bpf.c not yet written — skipping compile"
+            echo "kernel/tracer.bpf.c not yet written — skipping"
           fi
