@@ -20,7 +20,7 @@ jobs:
       - name: Install eBPF build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang llvm libbpf-dev linux-headers-$(uname -r) bpftool
+          sudo apt-get install -y clang llvm libbpf-dev
 
       - name: Verify clang
         run: clang --version
@@ -56,12 +56,11 @@ jobs:
       - name: Compile eBPF kernel object
         run: |
           if [ -f kernel/tracer.bpf.c ]; then
-            echo "Generating vmlinux.h from running kernel BTF..."
-            bpftool btf dump file /sys/kernel/btf/vmlinux format c > kernel/vmlinux.h
+            echo "vmlinux.h present: $(wc -l < kernel/vmlinux.h) lines"
             echo "Compiling kernel/tracer.bpf.c..."
-            clang -O2 -g -target bpf -D__TARGET_ARCH_x86 -c kernel/tracer.bpf.c -o kernel/tracer.bpf.o
-            echo "Compilation successful:"
-            ls -lh kernel/tracer.bpf.o
+            clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
+              -c kernel/tracer.bpf.c -o kernel/tracer.bpf.o
+            echo "Compilation successful: $(ls -lh kernel/tracer.bpf.o)"
           else
             echo "kernel/tracer.bpf.c not yet written — skipping"
           fi
