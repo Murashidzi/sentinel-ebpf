@@ -35,3 +35,6 @@ kernel/*.o
 daemon/sentinel
 daemon/tracer_bpfeb.o
 daemon/tracer_bpfel.o
+  daemon/sentinel
+  daemon/tracer_bpfeb.o
+  daemon/tracer_bpfel.o
