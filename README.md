@@ -232,7 +232,7 @@ sentinel-ebpf/
 
 ## Quick start
 
-> Build 1 is in progress. These instructions will be complete and tested by end of April 2026.
+> Build 1 complete. Run instructions below are tested and working.
 
 **Prerequisites:** Linux kernel ≥ 5.8, Go 1.21+, clang/LLVM, Docker.
 
