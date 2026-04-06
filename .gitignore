@@ -32,3 +32,6 @@ ml/__pycache__/
 *.swp
 *.swo
 kernel/*.o
+daemon/sentinel
+daemon/tracer_bpfeb.o
+daemon/tracer_bpfel.o
