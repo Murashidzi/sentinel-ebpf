@@ -16,7 +16,7 @@
 
 This is different from Falco or Tetragon in one specific way: every alert says **what** happened, **where** it happened, **why** it is abnormal relative to *this container's own baseline*, and how confident each of three independent ML models is. Not just an anomaly score.
 
-> **Status:** Build 1 in progress — kernel tracer and Go daemon v1.  
+> **Status:** Build 1 complete — kernel tracer capturing live container syscalls. Build 2 starting May 2026.  
 > Demo videos, benchmark results, and SSRN pre-print will be linked here as each build phase completes.
 
 --- >< ---
@@ -282,7 +282,7 @@ sudo ./sentinel | jq .
 | Phase | Description | Status |
 |---|---|---|
 | Build 0 | bpftrace exploration + Go prerequisite gate | Complete |
-| Build 1 | C eBPF tracer (execve) + Go daemon v1 | In progress |
+| Build 1 | C eBPF tracer (execve) + Go daemon v1 | Complete |
 | Build 2 | All 6 tracepoints + feature extractor + rule engine | Planned — May |
 | Build 3 | Three-model ML engine + explainability layer | Planned — June |
 | Build 4 | Performance benchmarks + Kubernetes DaemonSet + Loom videos | Planned — July |
