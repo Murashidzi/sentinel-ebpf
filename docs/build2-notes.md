@@ -20,3 +20,5 @@ R2: REVERSE_SHELL - execve(/bin/sh) within 500ms of connect(external_ip)
 R3: CONTAINER_ESCAPE - openat(/proc/1/ns/*) from inside container
 R4: PORT_SCAN - 50+ connect() events in 10s from one container
 R5: RECON_TOOL - execve of nmap, masscan, netcat, nc
+## April 10 2026
+COS720 Practical 2 submitted. COS760 proposal submitted.
