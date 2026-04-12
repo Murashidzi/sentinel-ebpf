@@ -22,3 +22,7 @@ R4: PORT_SCAN - 50+ connect() events in 10s from one container
 R5: RECON_TOOL - execve of nmap, masscan, netcat, nc
 ## April 10 2026
 COS720 Practical 2 submitted. COS760 proposal submitted.
+
+## April 12 2026
+COS720 semester test 15 April at 14:30. Chapters 14-19 and AI-driven cybersecurity notes reviewed.
+Mandela Rhodes recommendation deadline: 13 April 10:00 — reminders sent to all three recommenders.
