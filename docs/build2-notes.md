@@ -26,3 +26,8 @@ COS720 Practical 2 submitted. COS760 proposal submitted.
 ## April 12 2026
 COS720 semester test 15 April at 14:30. Chapters 14-19 and AI-driven cybersecurity notes reviewed.
 Mandela Rhodes recommendation deadline: 13 April 10:00 — reminders sent to all three recommenders.
+
+## April 13 2026
+Mandela Rhodes recommendation deadline today at 10:00.
+COS720 semester test tomorrow 15 April at 14:30.
+Final exam consolidation — Chapters 14-19 and AI-driven cybersecurity notes complete.
