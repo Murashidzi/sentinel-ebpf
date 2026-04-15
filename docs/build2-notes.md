@@ -31,3 +31,7 @@ Mandela Rhodes recommendation deadline: 13 April 10:00 — reminders sent to all
 Mandela Rhodes recommendation deadline today at 10:00.
 COS720 semester test tomorrow 15 April at 14:30.
 Final exam consolidation — Chapters 14-19 and AI-driven cybersecurity notes complete.
+
+## April 15 2026
+COS720 semester test written. BUILD 2 implementation begins.
+Next: all 6 tracepoints, 9-feature extractor, rule engine.
