@@ -69,3 +69,8 @@ The experiment asks: given identical telemetry, does LSTM outperform IF and AE? 
 Cite: the bifurcated stream design (section 4.5) as the key methodological justification. Any difference in detection performance is attributable to represantation alone because the telemetry source is identical for all three models. No public dataset can make that guarantee.
 
 Add this argument explicitly to Chapter 5 (Evaluation) under "Threates to Validity" and defend it in Chapter 6 (Discussion).
+
+## April 20 2026
+Research proposal updated and submitted to Mr Makura.
+COS760 double-dip removed from plan — LSTM is COS700 only.
+Bill Mulligan outreach: commented on Tetragon issue tracker.
