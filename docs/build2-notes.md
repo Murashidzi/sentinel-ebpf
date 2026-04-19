@@ -35,3 +35,18 @@ Final exam consolidation — Chapters 14-19 and AI-driven cybersecurity notes co
 ## April 15 2026
 COS720 semester test written. BUILD 2 implementation begins.
 Next: all 6 tracepoints, 9-feature extractor, rule engine.
+
+## Planned additions beyond core BUILD 2 (BUILD 3 or future work)
+
+### sys_enter_mount - Container Escape Detection
+Triggers when a process attempts to mount a filesystem.
+A container should never mount new filesystems.
+Unauthorized mount = high-confidence container escape signal.
+Document as future work in Chapter 6 if not implemented by BUILD 3.
+
+### sched:sched_process_exit - Short-lived Process Detection
+Triggers when a process terminates.
+Correlate with execve entry events by PID to compute process lifetime.
+Processes that live under 1 second are a known malware pattern.
+Adds complexity to feature extractor - requires PID lifecycle tracking.
+Target: implement in BUILD 3 alongside the full feature pipeline.
