@@ -50,3 +50,22 @@ Correlate with execve entry events by PID to compute process lifetime.
 Processes that live under 1 second are a known malware pattern.
 Adds complexity to feature extractor - requires PID lifecycle tracking.
 Target: implement in BUILD 3 alongside the full feature pipeline.
+
+## Reviewer challenge - dataset validity (add to chapter 6 discussion)
+
+A likely reviewer objection: "Why should we trust that your Class 3 simulations represent real attacks?"
+
+Argument for self-generated telemetry being methodologically superior:
+
+1. The core research variable is REPRESENTATION, not attack coverage.
+The experiment asks: given identical telemetry, does LSTM outperform IF and AE? A public dataset cannot provide identical telemetry across all three models because public datasets were not collected via eBPF tracepoints with ppid/parent_comm fields. Switching to a public dataset would introduce instrumentation as a confounding vulnerable which is precisely what the bifurcated stream design eliminates.
+
+2. External datasets introduce instrumentation confounds. ADFA-LD was collected on different kernel versions, different container runtimes, and without parent-process lineage. Using it alongside eBPF telemetry would mean the models are not being compared on the same data - defeating the controlled comparison.
+
+3. The three-class taxonomy is explicitly labelled as behavioural patterns, not attacks. Class 3 is "advanced-like behaviour" not confirmed malware." This is methodologically precise and legally unambiguous. The argument is: we train on normal, and measure deviation. The nature of the deviation (Class 2 or Class 3) tests the model's sensitivity to increasingly subtle anomalies. Whether those exact patterns appear in ADFA-LD is irrelevant to the representational comparison.
+
+4. Reproducibility. Self-generated telemetry means the dataset can be fully released with the paper. Every reviewer can reproduce the exact collection conditions using the open-source sentinel-eBPF codebase. ADFA-LD and DARPA cannot offer this for eBPF-specific features.
+
+Cite: the bifurcated stream design (section 4.5) as the key methodological justification. Any difference in detection performance is attributable to represantation alone because the telemetry source is identical for all three models. No public dataset can make that guarantee.
+
+Add this argument explicitly to Chapter 5 (Evaluation) under "Threates to Validity" and defend it in Chapter 6 (Discussion).
