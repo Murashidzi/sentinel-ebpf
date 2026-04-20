@@ -74,3 +74,11 @@ Add this argument explicitly to Chapter 5 (Evaluation) under "Threates to Validi
 Research proposal updated and submitted to Mr Makura.
 COS760 double-dip removed from plan — LSTM is COS700 only.
 Bill Mulligan outreach: commented on Tetragon issue tracker.
+
+## April 20 2026
+BUILD 2 progress: all 6 tracepoints active and verified.
+headers.h expanded to 344 bytes universal struct.
+tracer.bpf.c: fill_common() helper + 6 tracepoint handlers.
+main.go: attaches all 6 tracepoints, switch on SyscallType.
+README updated. LinkedIn post published.
+Next: Enricher goroutine (issue #15).
