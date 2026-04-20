@@ -53,7 +53,12 @@ type tracerSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tracerProgramSpecs struct {
-	TraceExecve *ebpf.ProgramSpec `ebpf:"trace_execve"`
+	TraceClone   *ebpf.ProgramSpec `ebpf:"trace_clone"`
+	TraceConnect *ebpf.ProgramSpec `ebpf:"trace_connect"`
+	TraceExecve  *ebpf.ProgramSpec `ebpf:"trace_execve"`
+	TraceOpenat  *ebpf.ProgramSpec `ebpf:"trace_openat"`
+	TracePtrace  *ebpf.ProgramSpec `ebpf:"trace_ptrace"`
+	TraceSetuid  *ebpf.ProgramSpec `ebpf:"trace_setuid"`
 }
 
 // tracerMapSpecs contains maps before they are loaded into the kernel.
@@ -95,12 +100,22 @@ func (m *tracerMaps) Close() error {
 //
 // It can be passed to loadTracerObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tracerPrograms struct {
-	TraceExecve *ebpf.Program `ebpf:"trace_execve"`
+	TraceClone   *ebpf.Program `ebpf:"trace_clone"`
+	TraceConnect *ebpf.Program `ebpf:"trace_connect"`
+	TraceExecve  *ebpf.Program `ebpf:"trace_execve"`
+	TraceOpenat  *ebpf.Program `ebpf:"trace_openat"`
+	TracePtrace  *ebpf.Program `ebpf:"trace_ptrace"`
+	TraceSetuid  *ebpf.Program `ebpf:"trace_setuid"`
 }
 
 func (p *tracerPrograms) Close() error {
 	return _TracerClose(
+		p.TraceClone,
+		p.TraceConnect,
 		p.TraceExecve,
+		p.TraceOpenat,
+		p.TracePtrace,
+		p.TraceSetuid,
 	)
 }
 
