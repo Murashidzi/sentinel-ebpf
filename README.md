@@ -16,7 +16,7 @@
 
 This is different from Falco or Tetragon in one specific way: every alert says **what** happened, **where** it happened, **why** it is abnormal relative to *this container's own baseline*, and how confident each of three independent ML models is. Not just an anomaly score.
 
-> **Status:** Build 1 complete — kernel tracer capturing live container syscalls. Build 2 starting May 2026.  
+> **Status:** Build 2 in progress — all 6 tracepoints active. Enricher, feature extractor, and rule engine next.
 > Demo videos, benchmark results, and SSRN pre-print will be linked here as each build phase completes.
 
 --- >< ---
@@ -70,11 +70,11 @@ Six eBPF tracepoints capture the full attack surface across all container namesp
 | Tracepoint | Fields captured | Attacks detected |
 |---|---|---|
 | `sys_enter_execve` | pid, ppid, comm, parent\_comm, filename, cgroup\_id | Reverse shells, recon tools, LotL binaries, web shell execution |
-| `sys_enter_openat` | pid, filename, flags, cgroup\_id | Container escape via `/proc/1/ns/*`, credential theft |
-| `sys_enter_connect` | pid, dst\_ip, dst\_port, cgroup\_id | C2 callbacks, port scans, lateral movement |
-| `sys_enter_setuid/gid` | pid, old\_uid, new\_uid, cgroup\_id | Privilege escalation: setuid(0) from non-root process |
-| `sys_enter_clone` | pid, clone\_flags, cgroup\_id | Namespace escape, container isolation breakout |
-| `sys_enter_ptrace` | pid, request\_type, target\_pid, cgroup\_id | Debugger-based process injection, memory inspection |
+| `sys_enter_openat` | pid, filename, flags, cgroup_id | Container escape via /proc/1/ns/, credential theft, K8s token reads |
+| `sys_enter_connect` | pid, dest_ip, dest_port, cgroup_id | C2 callbacks, port scans, reverse shell trigger, data exfiltration |
+| `sys_enter_setuid` | pid, uid, new_uid, cgroup_id | Privilege escalation: setuid(0) from non-root container process |
+| `sys_enter_clone` | pid, clone_flags, cgroup_id | Namespace escape via CLONE_NEWUSER, container isolation breakout |
+| `sys_enter_ptrace` | pid, ptrace_request, cgroup_id | Process injection, debugger attachment, memory inspection |
 
 The `ppid` and `parent_comm` fields are captured from the kernel `task_struct` using `BPF_CORE_READ_INTO` — this powers the three context-aware features that distinguish sentinel-eBPF from a tutorial project.
 
@@ -283,7 +283,7 @@ sudo ./sentinel | jq .
 |---|---|---|
 | Build 0 | bpftrace exploration + Go prerequisite gate | Complete |
 | Build 1 | C eBPF tracer (execve) + Go daemon v1 | Complete |
-| Build 2 | All 6 tracepoints + feature extractor + rule engine | Planned — May |
+| Build 2 | All 6 tracepoints + feature extractor + rule engine | In progress — April |
 | Build 3 | Three-model ML engine + explainability layer | Planned — June |
 | Build 4 | Performance benchmarks + Kubernetes DaemonSet + Loom videos | Planned — July |
 | Build 5 | Open source contributions (Tetragon/Tracee/Falco PRs) | Parallel — June–Aug |
