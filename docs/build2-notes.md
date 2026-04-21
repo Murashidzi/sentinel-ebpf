@@ -82,3 +82,7 @@ tracer.bpf.c: fill_common() helper + 6 tracepoint handlers.
 main.go: attaches all 6 tracepoints, switch on SyscallType.
 README updated. LinkedIn post published.
 Next: Enricher goroutine (issue #15).
+
+## April 21 2026
+Resuming BUILD 2. Next: Enricher goroutine (issue #15).
+Enricher maps cgroup_id to container_id by reading /sys/fs/cgroup/.
