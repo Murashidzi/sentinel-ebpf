@@ -93,3 +93,7 @@ Fix: pass daemon PID to kernel via BPF_MAP_TYPE_ARRAY at load time.
 Filter in each tracepoint handler before bpf_ringbuf_submit.
 This eliminates the event before ring buffer write - zero CPU cost.
 Implement after core BUILD 2  feautures are complete.
+## April 22 2026
+Enricher complete and verified. Issue #15 closed.
+SENTINEL_PID incomplete filter removed from tracer.bpf.c
+Next: feature_extractor.go - nine-feature vector per container per window.
