@@ -67,6 +67,7 @@ type SentinelEvent struct {
 
 // EventJSON is the JSON output format.
 type EventJSON struct {
+        ContainerID string `json:"container_id"`
 	SyscallType string `json:"syscall_type"`
 	PID         uint32 `json:"pid"`
 	PPID        uint32 `json:"ppid"`
@@ -179,61 +180,90 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+        // done channel signals backhround goroutines to exit.
+        done := make(chan struct{})
+
 	go func() {
 		<-ctx.Done()
 		fmt.Fprintf(os.Stderr, "\nsentinel-ebpf: shutting down.\n")
 		rd.Close()
+                close(done)
 	}()
+
+        // Channels connecting the pipeline stages.
+        // Buffer sizes prevent fast producers from blocking slow consumers
+        // under brief load spikes without dropping events.
+        rawCh := make(chan SentinelEvent, 4096)
+        enrichedCh := make(chan EnrichedEvent, 4096)
+
+        // Start the Enricher.
+        // refresh() is called once at creation to build the initial map,
+        // then runRefreshLoop keeps it current every 5 seconds.
+        enricher := newCgroupEnricher()
+        go enricher.runRefreshLoop(done)
+        go enricher.enrichEvents(rawCh, enrichedCh)
+
+        // Ring buffer reader goroutine.
+        // Reads raw bytes from kernel, deserialises into SentinelEvent,
+        // forwards to rawCh for enrichment.
+        go func() {
+            defer close(rawCh)
+            for {
+                record, err := rd.Read()
+                if err != nil {
+                    if errors.Is(err, ringbuf.ErrClosed) {
+                        return
+                    }
+                    log.Printf("Read error: %v", err)
+                    continue
+                }
+
+                var event SentinelEvent
+                if err := binary.Read(
+                    bytes.NewReader(record.RawSample),
+                    binary.NativeEndian,
+                    &event,
+                ); err != nil {
+                    log.Printf("Deserialise error: %v", err)
+                    continue
+                }
+                rawCh <- event
+                }
+            }()
 
 	fmt.Fprintf(os.Stderr,
 		"sentinel-ebpf: tracing 6 syscalls. Press Ctrl+C to stop.\n\n")
 
-	for {
-		record, err := rd.Read()
-		if err != nil {
-			if errors.Is(err, ringbuf.ErrClosed) {
-				return
-			}
-			log.Printf("Read error: %v", err)
-			continue
-		}
-
-		var event SentinelEvent
-		if err := binary.Read(
-			bytes.NewReader(record.RawSample),
-			binary.NativeEndian,
-			&event,
-		); err != nil {
-			log.Printf("Deserialise error: %v", err)
-			continue
-		}
-
+        // Event loop: reads enriched events and prints JSON.
+        // container_id is now populated for every event.
+	for enriched := range enrichedCh {
 		out := EventJSON{
-			SyscallType: syscallName(event.SyscallType),
-			PID:         event.PID,
-			PPID:        event.PPID,
-			UID:         event.UID,
-			CgroupID:    event.CgroupID,
-			TimestampNs: event.TimestampNs,
-			Comm:        nullTerminated(event.Comm[:]),
-			ParentComm:  nullTerminated(event.ParentComm[:]),
+                        ContainerID: enriched.ContainerID,
+			SyscallType: syscallName(enriched.SyscallType),
+			PID:         enriched.PID,
+			PPID:        enriched.PPID,
+			UID:         enriched.UID,
+			CgroupID:    enriched.CgroupID,
+			TimestampNs: enriched.TimestampNs,
+			Comm:        nullTerminated(enriched.Comm[:]),
+			ParentComm:  nullTerminated(enriched.ParentComm[:]),
 		}
 
 		// Populate syscall-specific fields.
-		switch event.SyscallType {
+		switch enriched.SyscallType {
 		case SyscallExecve, SyscallOpenat:
-			out.Filename = nullTerminated(event.Filename[:])
+			out.Filename = nullTerminated(enriched.Filename[:])
 		case SyscallConnect:
-			if event.DestIP != 0 {
-				out.DestIP = formatIP(event.DestIP)
-				out.DestPort = event.DestPort
+			if enriched.DestIP != 0 {
+				out.DestIP = formatIP(enriched.DestIP)
+				out.DestPort = enriched.DestPort
 			}
 		case SyscallSetuid:
-			out.NewUID = event.NewUID
+			out.NewUID = enriched.NewUID
 		case SyscallClone:
-			out.CloneFlags = event.CloneFlags
+			out.CloneFlags = enriched.CloneFlags
 		case SyscallPtrace:
-			out.NewUID = event.NewUID // ptrace request type
+			out.NewUID = enriched.NewUID // ptrace request type
 		}
 
 		data, err := json.Marshal(out)
