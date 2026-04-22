@@ -86,3 +86,10 @@ Next: Enricher goroutine (issue #15).
 ## April 21 2026
 Resuming BUILD 2. Next: Enricher goroutine (issue #15).
 Enricher maps cgroup_id to container_id by reading /sys/fs/cgroup/.
+
+##Observer effect - kernel-side PID filter (stretch goal)
+The daemon's own openat calls during cgroup refresh appear in output.
+Fix: pass daemon PID to kernel via BPF_MAP_TYPE_ARRAY at load time.
+Filter in each tracepoint handler before bpf_ringbuf_submit.
+This eliminates the event before ring buffer write - zero CPU cost.
+Implement after core BUILD 2  feautures are complete.
