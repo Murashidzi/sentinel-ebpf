@@ -53,6 +53,7 @@ int trace_execve(struct trace_event_raw_sys_enter *ctx)
 
     fill_common(e, SYSCALL_EXECVE);
 
+
     /* filename is args[0]: pointer to string in user memory */
     bpf_probe_read_user_str(&e->filename, sizeof(e->filename),
                             (const char *)ctx->args[0]);
@@ -71,6 +72,7 @@ int trace_openat(struct trace_event_raw_sys_enter *ctx)
     if (!e) return 0;
 
     fill_common(e, SYSCALL_OPENAT);
+
 
     /*
      * openat(dirfd, pathname, flags)
@@ -96,6 +98,7 @@ int trace_connect(struct trace_event_raw_sys_enter *ctx)
     if (!e) return 0;
 
     fill_common(e, SYSCALL_CONNECT);
+
 
     /*
      * connect(sockfd, addr, addrlen)
@@ -126,6 +129,7 @@ int trace_setuid(struct trace_event_raw_sys_enter *ctx)
 
     fill_common(e, SYSCALL_SETUID);
 
+
     /*
      * setuid(uid)
      * args[0] is the new UID directly — no pointer dereference.
@@ -149,6 +153,7 @@ int trace_clone(struct trace_event_raw_sys_enter *ctx)
     if (!e) return 0;
 
     fill_common(e, SYSCALL_CLONE);
+
 
     /*
      * clone(flags, ...)
@@ -180,6 +185,7 @@ int trace_ptrace(struct trace_event_raw_sys_enter *ctx)
     if (!e) return 0;
 
     fill_common(e, SYSCALL_PTRACE);
+
 
     /*
      * ptrace(request, pid, addr, data)
