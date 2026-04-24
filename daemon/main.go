@@ -195,6 +195,7 @@ func main() {
         // under brief load spikes without dropping events.
         rawCh := make(chan SentinelEvent, 4096)
         enrichedCh := make(chan EnrichedEvent, 4096)
+        featureVecCh := make(chan FeatureVector, 256)
 
         // Start the Enricher.
         // refresh() is called once at creation to build the initial map,
@@ -202,6 +203,9 @@ func main() {
         enricher := newCgroupEnricher()
         go enricher.runRefreshLoop(done)
         go enricher.enrichEvents(rawCh, enrichedCh)
+        //Start the feature extractor.
+        extractor := newFeatureExtractor()
+        go extractor.runComputeLoop(featureVecCh, done)
 
         // Ring buffer reader goroutine.
         // Reads raw bytes from kernel, deserialises into SentinelEvent,
@@ -234,10 +238,21 @@ func main() {
 	fmt.Fprintf(os.Stderr,
 		"sentinel-ebpf: tracing 6 syscalls. Press Ctrl+C to stop.\n\n")
 
+        // Feature vector printer — logs computed vectors for verification.
+        // In BUILD 3 this channel feeds the ML inference server instead.
+        go func() {
+                for fv := range featureVecCh {
+                        data, _ := json.Marshal(fv)
+                        fmt.Fprintf(os.Stderr, "[FEATURE] %s\n", string(data))
+                }
+        }()
+
+
         // Event loop: reads enriched events and prints JSON.
         // container_id is now populated for every event.
 	for enriched := range enrichedCh {
-		out := EventJSON{
+	extractor.processEvent(enriched)
+	out := EventJSON{
                         ContainerID: enriched.ContainerID,
 			SyscallType: syscallName(enriched.SyscallType),
 			PID:         enriched.PID,
