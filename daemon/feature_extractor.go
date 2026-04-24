@@ -81,7 +81,7 @@ type ContainerBaseline struct {
 	stabilised  bool // true after stabilisationWindows complete windows
 }
 
-const stabilisationWindows = 2 // 12 x 5s = 60 seconds of history
+const stabilisationWindows = 12 // 12 x 5s = 60 seconds of history
 
 func (b *ContainerBaseline) update(fv [9]float64) {
 	for i, v := range fv {
