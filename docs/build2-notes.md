@@ -97,3 +97,10 @@ Implement after core BUILD 2  feautures are complete.
 Enricher complete and verified. Issue #15 closed.
 SENTINEL_PID incomplete filter removed from tracer.bpf.c
 Next: feature_extractor.go - nine-feature vector per container per window.
+
+## April 22 2026 — session end
+feature_extractor.go complete with Welford baseline and snapshot mutex fix.
+Wired into main.go: enrichedCh -> extractor.processEvent() + featureVecCh.
+FEATURE vector output not yet verified — chat length limit hit.
+Resume: verify FEATURE vectors appear, then commit and close issue #16.
+Next: rule engine (issue #17).
