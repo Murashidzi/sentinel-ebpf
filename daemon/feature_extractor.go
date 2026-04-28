@@ -119,7 +119,7 @@ func newContainerWindow(containerID string) *containerWindow {
 	return &containerWindow{
 		containerID:    containerID,
 		events:         make([]WindowEvent, 0, 256),
-		windowDuration: 5 * time.Second,
+		windowDuration: 10 * time.Second,
 	}
 }
 
@@ -263,7 +263,7 @@ func (fe *featureExtractor) processEvent(ev EnrichedEvent) {
 	fe.mu.Unlock()
 
 	we := WindowEvent{
-		Timestamp:   time.Unix(0, int64(ev.TimestampNs)),
+		Timestamp:   time.Now(),
 		SyscallType: ev.SyscallType,
 		Comm:        nullTerminated(ev.Comm[:]),
 		ParentComm:  nullTerminated(ev.ParentComm[:]),

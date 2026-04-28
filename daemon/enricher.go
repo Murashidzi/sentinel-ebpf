@@ -7,20 +7,18 @@ import (
 	"sync"
 	"syscall"
 	"time"
+        "fmt"
 )
 
 // EnrichedEvent wraps a raw SentinelEvent with container identity.
-// The Enricher resolves cgroup_id to a human-readable container_id
-// by mapping inode numbers of cgroup directories to container IDs.
 type EnrichedEvent struct {
 	SentinelEvent
-	ContainerID string // extracted from cgroup directory name
+	ContainerID string
 }
 
 // cgroupEnricher maintains a live map of cgroup inode -> container ID.
-// The map is rebuilt every refreshInterval by walking /sys/fs/cgroup/.
 type cgroupEnricher struct {
-	mu              sync.RWMutex
+	mu               sync.RWMutex
 	inodeToContainer map[uint64]string
 	refreshInterval  time.Duration
 }
@@ -30,8 +28,6 @@ func newCgroupEnricher() *cgroupEnricher {
 		inodeToContainer: make(map[uint64]string),
 		refreshInterval:  5 * time.Second,
 	}
-	// Build the map immediately on creation so the first events
-	// are enriched correctly without waiting for the first tick.
 	e.refresh()
 	return e
 }
@@ -44,7 +40,7 @@ func (e *cgroupEnricher) refresh() {
 
 	filepath.WalkDir("/sys/fs/cgroup", func(path string, d os.DirEntry, err error) error {
 		if err != nil {
-			return nil // skip unreadable directories silently
+			return nil
 		}
 		if !d.IsDir() {
 			return nil
@@ -52,11 +48,6 @@ func (e *cgroupEnricher) refresh() {
 
 		name := d.Name()
 
-		// Match container cgroup directories.
-		// Docker:      docker-<64-char-hex>.scope
-		// containerd:  cri-containerd-<64-char-hex>.scope
-		// Both patterns end in .scope and contain the container ID
-		// as the last dash-separated segment before .scope.
 		if !strings.HasSuffix(name, ".scope") {
 			return nil
 		}
@@ -66,75 +57,121 @@ func (e *cgroupEnricher) refresh() {
 			return nil
 		}
 
-		// Read the inode of this cgroup directory.
-		// The inode == cgroup_id captured by bpf_get_current_cgroup_id().
+		// Map the scope directory inode itself.
 		info, err := os.Stat(path)
 		if err != nil {
 			return nil
 		}
-
 		stat, ok := info.Sys().(*syscall.Stat_t)
 		if !ok {
 			return nil
 		}
-
 		newMap[stat.Ino] = containerID
+
+		// Recursively map all descendant cgroup directories.
+		// On nested container setups (Kubernetes-in-Docker), processes
+		// run in cgroups several levels deep under the scope root.
+		// Without recursive mapping, container process events appear as "host".
+		filepath.WalkDir(path, func(childPath string, cd os.DirEntry, cerr error) error {
+			if cerr != nil || childPath == path {
+				return nil
+			}
+			if !cd.IsDir() {
+				return nil
+			}
+			childInfo, err := os.Stat(childPath)
+			if err != nil {
+				return nil
+			}
+			childStat, ok := childInfo.Sys().(*syscall.Stat_t)
+			if !ok {
+				return nil
+			}
+			newMap[childStat.Ino] = containerID
+			return nil
+		})
+
 		return nil
 	})
 
-	// Swap the map under the write lock.
-	// Readers calling lookup() hold RLock and will complete their
-	// current lookup before the swap happens.
 	e.mu.Lock()
 	e.inodeToContainer = newMap
 	e.mu.Unlock()
 }
 
 // extractContainerID parses a container ID from a cgroup scope directory name.
-//
-// Examples:
-//   docker-abc123def456.scope             -> abc123def456
-//   cri-containerd-abc123def456.scope     -> abc123def456
-//   system.slice                          -> ""
 func extractContainerID(name string) string {
-	// Remove .scope suffix
 	name = strings.TrimSuffix(name, ".scope")
-
-	// Split on dash and take the last segment
 	parts := strings.Split(name, "-")
 	if len(parts) < 2 {
 		return ""
 	}
-
 	id := parts[len(parts)-1]
-
-	// Container IDs are 64-character hex strings.
-	// Reject anything that is not at least 12 characters
-	// (short IDs used in some contexts) or contains non-hex chars.
 	if len(id) < 12 {
 		return ""
 	}
-
 	return id
 }
 
+
+// lookupByPID reads the container ID directly from /proc/<pid>/cgroup.
+// This is more reliable than inode mapping for short-lived containers
+// because the cgroup path is available immediately when the process exists.
+func lookupByPID(pid uint32) string {
+        data, err := os.ReadFile(fmt.Sprintf("/proc/%d/cgroup", pid))
+	if err != nil {
+		return ""
+	}
+	line := strings.TrimSpace(string(data))
+	for _, part := range strings.Split(line, "\n") {
+		if !strings.HasPrefix(part, "0::") {
+			continue
+		}
+		path := strings.TrimPrefix(part, "0::")
+		segments := strings.Split(path, "/")
+		for _, seg := range segments {
+			if strings.HasSuffix(seg, ".scope") {
+				id := extractContainerID(seg)
+				if id != "" {
+					return id
+				}
+			}
+		}
+	}
+	return ""
+}
+
+
+
 // lookup returns the container ID for a given cgroup inode.
-// Returns "host" if the cgroup is not a known container — this means
-// the event came from a host process, not a container.
-// Never returns empty string — every event gets an identity.
+// Used as fallback when PID-based lookup fails (process already exited).
 func (e *cgroupEnricher) lookup(cgroupID uint64) string {
 	e.mu.RLock()
 	id, ok := e.inodeToContainer[cgroupID]
 	e.mu.RUnlock()
 
-	if !ok {
-		return "host"
+
+	if ok {
+		return id
 	}
-	return id
+
+
+	for i := 0; i < 5; i++ {
+		time.Sleep(20 * time.Millisecond)
+		e.refresh()
+		e.mu.RLock()
+		id, ok = e.inodeToContainer[cgroupID]
+		e.mu.RUnlock()
+		if ok {
+			return id
+		}
+	}
+
+
+	return "host"
 }
 
 // runRefreshLoop starts the background ticker that keeps the map current.
-// Call this in a goroutine. It blocks until the done channel is closed.
 func (e *cgroupEnricher) runRefreshLoop(done <-chan struct{}) {
 	ticker := time.NewTicker(e.refreshInterval)
 	defer ticker.Stop()
@@ -149,15 +186,16 @@ func (e *cgroupEnricher) runRefreshLoop(done <-chan struct{}) {
 	}
 }
 
-// enrichEvents reads raw events from rawCh, attaches container identity,
-// and writes enriched events to enrichedCh.
-// Runs as a goroutine. Exits when rawCh is closed.
+// enrichEvents reads raw events, attaches container identity, writes enriched events.
 func (e *cgroupEnricher) enrichEvents(
 	rawCh <-chan SentinelEvent,
 	enrichedCh chan<- EnrichedEvent,
 ) {
 	for event := range rawCh {
-		containerID := e.lookup(event.CgroupID)
+		containerID := lookupByPID(event.PID)
+		if containerID == "" {
+			containerID = e.lookup(event.CgroupID)
+		}
 		enrichedCh <- EnrichedEvent{
 			SentinelEvent: event,
 			ContainerID:   containerID,

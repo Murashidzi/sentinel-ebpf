@@ -185,7 +185,6 @@ func main() {
 
 	go func() {
 		<-ctx.Done()
-		fmt.Fprintf(os.Stderr, "\nsentinel-ebpf: shutting down.\n")
 		rd.Close()
                 close(done)
 	}()
@@ -231,12 +230,19 @@ func main() {
                     log.Printf("Deserialise error: %v", err)
                     continue
                 }
-                rawCh <- event
+                // Attempt fast /proc-based container ID lookup while process is alive.
+                // Falls back to rawCh for inode-based enrichment if /proc read fails.
+                if cid := lookupByPID(event.PID); cid != "" {
+                    enrichedCh <- EnrichedEvent{
+                        SentinelEvent: event,
+                        ContainerID:   cid,
+                    }
+                } else {
+                    rawCh <- event
+                }
                 }
             }()
 
-	fmt.Fprintf(os.Stderr,
-		"sentinel-ebpf: tracing 6 syscalls. Press Ctrl+C to stop.\n\n")
 
         // Feature vector printer — logs computed vectors for verification.
         // In BUILD 3 this channel feeds the ML inference server instead.
