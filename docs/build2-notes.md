@@ -104,3 +104,8 @@ Wired into main.go: enrichedCh -> extractor.processEvent() + featureVecCh.
 FEATURE vector output not yet verified — chat length limit hit.
 Resume: verify FEATURE vectors appear, then commit and close issue #16.
 Next: rule engine (issue #17).
+
+## April 28 2026
+Issue #16 closed. Feature extractor producing non-zero features from live containers.
+lookupByPID via /proc confirmed working for long-running containers.
+Next: rule engine (issue #17).
