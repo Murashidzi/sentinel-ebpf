@@ -109,3 +109,6 @@ Next: rule engine (issue #17).
 Issue #16 closed. Feature extractor producing non-zero features from live containers.
 lookupByPID via /proc confirmed working for long-running containers.
 Next: rule engine (issue #17).
+# May 20 2026
+Resuming BUILD 2 after 22-day gap. Rule engine (issue #17) is next.
+No excuse for the gap. Recommitting to daily output from today.
