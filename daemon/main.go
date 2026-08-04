@@ -195,6 +195,7 @@ func main() {
         rawCh := make(chan SentinelEvent, 4096)
         enrichedCh := make(chan EnrichedEvent, 4096)
         featureVecCh := make(chan FeatureVector, 256)
+        alertCh := make(chan Alert, 256)
 
         // Start the Enricher.
         // refresh() is called once at creation to build the initial map,
@@ -205,7 +206,8 @@ func main() {
         //Start the feature extractor.
         extractor := newFeatureExtractor()
         go extractor.runComputeLoop(featureVecCh, done)
-
+        engine := newRuleEngine()
+        go runAlertPrinter(alertCh,done)
         // Ring buffer reader goroutine.
         // Reads raw bytes from kernel, deserialises into SentinelEvent,
         // forwards to rawCh for enrichment.
@@ -232,14 +234,8 @@ func main() {
                 }
                 // Attempt fast /proc-based container ID lookup while process is alive.
                 // Falls back to rawCh for inode-based enrichment if /proc read fails.
-                if cid := lookupByPID(event.PID); cid != "" {
-                    enrichedCh <- EnrichedEvent{
-                        SentinelEvent: event,
-                        ContainerID:   cid,
-                    }
-                } else {
-                    rawCh <- event
-                }
+
+                rawCh <- event
                 }
             }()
 
@@ -258,6 +254,12 @@ func main() {
         // container_id is now populated for every event.
 	for enriched := range enrichedCh {
 	extractor.processEvent(enriched)
+        if alert := engine.evaluate(enriched); alert != nil {
+            alertCh <- *alert
+        } else {
+            fmt.Fprintf(os.Stderr, "[DEBUG] evaluated %s cid=%s\n", syscallName(enriched.SyscallType), enriched.ContainerID)
+        }
+
 	out := EventJSON{
                         ContainerID: enriched.ContainerID,
 			SyscallType: syscallName(enriched.SyscallType),

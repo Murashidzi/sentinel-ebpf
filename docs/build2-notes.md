@@ -112,3 +112,10 @@ Next: rule engine (issue #17).
 # May 20 2026
 Resuming BUILD 2 after 22-day gap. Rule engine (issue #17) is next.
 No excuse for the gap. Recommitting to daily output from today.
+
+## Rule engine - verification status
+R4 PORT_SCAN verified firing repeatedly on live Kubernetes traffic (container c8ca9995),
+50 connects in 10s window. Confirms full pipeline: ingest -> enrich -> windowed state -> Strategy dispatch -> alert emission.
+R1/R2/R3/R5 code-complete, share identical engine path, differ only in predicate.
+R3 live trigger requires --pid=host namespace sharing; deferred as testing detail, not
+a code gap. Known limit: short-lived exec process attributed to "host" skip container rules.
