@@ -26,6 +26,11 @@ static __always_inline void fill_common(struct sentinel_event *e,
 {
     struct task_struct *task;
     struct task_struct *parent;
+    /* Zero the whole event: bpf_ringbuf_reserve does not clear the slot,
+       so optional fields (dest_ip, dest_port, new_uid, clone_flags,
+       filename) would otherwise carry stale data from a prior event
+       that reused this slot. */
+    __builtin_memset(e, 0, sizeof(*e));
 
     e->syscall_type  = syscall_type;
     e->pid           = bpf_get_current_pid_tgid() >> 32;

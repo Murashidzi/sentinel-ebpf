@@ -119,3 +119,13 @@ R4 PORT_SCAN verified firing repeatedly on live Kubernetes traffic (container c8
 R1/R2/R3/R5 code-complete, share identical engine path, differ only in predicate.
 R3 live trigger requires --pid=host namespace sharing; deferred as testing detail, not
 a code gap. Known limit: short-lived exec process attributed to "host" skip container rules.
+
+## Aug 22 2026 — critical fix: stale ring-buffer slot contamination
+bpf_ringbuf_reserve does not zero the slot. fill_common did not clear
+optional fields (dest_ip, dest_port, new_uid, clone_flags, filename),
+so events carried stale data from prior events that reused the slot.
+Symptom: connect events showed ASCII-as-IP (e.g. 115.117.100.111 = "sudo").
+Fix: __builtin_memset(e, 0, sizeof(*e)) at top of fill_common.
+Impact: corrects dest_ip/dest_port for R2/R4, new_uid for R1, and all
+network features. Found while fact-checking thesis Chapter 2 against
+built reality before BUILD 3 ML training.
