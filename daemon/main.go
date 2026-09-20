@@ -256,8 +256,6 @@ func main() {
 	extractor.processEvent(enriched)
         if alert := engine.evaluate(enriched); alert != nil {
             alertCh <- *alert
-        } else {
-            fmt.Fprintf(os.Stderr, "[DEBUG] evaluated %s cid=%s\n", syscallName(enriched.SyscallType), enriched.ContainerID)
         }
 
 	out := EventJSON{
