@@ -36,3 +36,4 @@ Thumbs.db
 *.swo
 thesis/
 evaluation/datasets/**/*.jsonl
+ml/*.npy
