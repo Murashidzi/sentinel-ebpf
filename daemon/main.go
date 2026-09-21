@@ -1,14 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"flag"
 	"os"
+	"unsafe"
 	"os/signal"
 	"syscall"
 
@@ -120,6 +120,11 @@ func formatIP(ip uint32) string {
 }
 
 func main() {
+	emitEvents := flag.Bool("emit-events", false,
+		"emit a JSON record for every syscall event (development/capture "+
+			"mode); off by default, production emits only alerts and features")
+	flag.Parse()
+
 	if err := rlimit.RemoveMemlock(); err != nil {
 		log.Fatalf("Failed to remove memlock: %v", err)
 	}
@@ -235,15 +240,18 @@ func main() {
                     continue
                 }
 
-                var event SentinelEvent
-                if err := binary.Read(
-                    bytes.NewReader(record.RawSample),
-                    binary.NativeEndian,
-                    &event,
-                ); err != nil {
-                    log.Printf("Deserialise error: %v", err)
+                // Zero-copy decode: reinterpret the raw ring-buffer bytes
+                // directly as the fixed-layout struct. The Go struct mirrors
+                // the C struct's memory layout exactly, and the kernel writes
+                // native-endian, so no reflection or allocation is needed.
+                // binary.Read was profiled as the dominant CPU cost (reflection
+                // + per-event allocation driving GC pressure); this pattern is
+                // what production eBPF tools use.
+                if len(record.RawSample) < int(unsafe.Sizeof(SentinelEvent{})) {
+                    log.Printf("short sample: %d bytes", len(record.RawSample))
                     continue
                 }
+                event := *(*SentinelEvent)(unsafe.Pointer(&record.RawSample[0]))
                 // Attempt fast /proc-based container ID lookup while process is alive.
                 // Falls back to rawCh for inode-based enrichment if /proc read fails.
 
@@ -270,6 +278,9 @@ func main() {
             alertCh <- *alert
         }
 
+	if !*emitEvents {
+		continue
+	}
 	out := EventJSON{
                         ContainerID: enriched.ContainerID,
 			SyscallType: syscallName(enriched.SyscallType),

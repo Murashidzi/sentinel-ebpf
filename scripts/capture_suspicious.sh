@@ -15,7 +15,7 @@ sleep 3
 WID=$(docker inspect s_worker --format '{{.Id}}')
 echo "worker: ${WID:0:12}"
 OUT="evaluation/datasets/suspicious/suspicious_worker_${TS}.jsonl"
-sudo daemon/sentinel 2>/dev/null | grep --line-buffered -v '"comm":"sentinel"' > "$OUT" &
+sudo daemon/sentinel -emit-events 2>/dev/null | grep --line-buffered -v '"comm":"sentinel"' > "$OUT" &
 sleep 3
 END=$((SECONDS+DUR))
 while [ $SECONDS -lt $END ]; do
