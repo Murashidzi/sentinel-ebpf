@@ -145,29 +145,22 @@ func lookupByPID(pid uint32) string {
 
 // lookup returns the container ID for a given cgroup inode.
 // Used as fallback when PID-based lookup fails (process already exited).
+// On a cache miss it returns "host" immediately rather than walking the
+// cgroup tree. A per-event walk was catastrophic for overhead: each
+// unresolvable short-lived-process event triggered five full
+// /sys/fs/cgroup walks, generating thousands of directory reads per
+// second and ~67% idle CPU. The background runRefreshLoop keeps the map
+// current on a fixed interval, which resolves any container that
+// persists beyond one refresh; a process already gone would never
+// resolve regardless.
 func (e *cgroupEnricher) lookup(cgroupID uint64) string {
 	e.mu.RLock()
 	id, ok := e.inodeToContainer[cgroupID]
 	e.mu.RUnlock()
 
-
 	if ok {
 		return id
 	}
-
-
-	for i := 0; i < 5; i++ {
-		time.Sleep(20 * time.Millisecond)
-		e.refresh()
-		e.mu.RLock()
-		id, ok = e.inodeToContainer[cgroupID]
-		e.mu.RUnlock()
-		if ok {
-			return id
-		}
-	}
-
-
 	return "host"
 }
 

@@ -124,9 +124,21 @@ func main() {
 		log.Fatalf("Failed to remove memlock: %v", err)
 	}
 
-	// Load compiled eBPF object into the kernel.
+	// Load the eBPF spec, then set the daemon's own PID as a kernel
+	// constant so the tracer drops our own events in-kernel. This
+	// eliminates the observer effect: pre-fix, ~99.5% of processed
+	// events were the daemon's own cgroup-walk syscalls.
+	spec, err := loadTracer()
+	if err != nil {
+		log.Fatalf("Failed to load eBPF spec: %v", err)
+	}
+	if err := spec.RewriteConstants(map[string]interface{}{
+		"sentinel_pid": uint32(os.Getpid()),
+	}); err != nil {
+		log.Fatalf("Failed to set sentinel_pid: %v", err)
+	}
 	objs := tracerObjects{}
-	if err := loadTracerObjects(&objs, nil); err != nil {
+	if err := spec.LoadAndAssign(&objs, nil); err != nil {
 		log.Fatalf("Failed to load eBPF objects: %v", err)
 	}
 	defer objs.Close()

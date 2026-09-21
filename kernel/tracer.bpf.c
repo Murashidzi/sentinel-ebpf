@@ -17,6 +17,17 @@ struct {
     __uint(max_entries, 256 * 1024);
 } events SEC(".maps");
 
+/* Set by the loader to the daemon's own PID. Events from this PID are
+   dropped in-kernel before any processing, eliminating the observer
+   effect where the daemon's own cgroup walks would otherwise flood
+   the pipeline (measured at ~99.5% of processed events pre-fix). */
+volatile const __u32 sentinel_pid = 0;
+
+static __always_inline int is_self(void)
+{
+    return (bpf_get_current_pid_tgid() >> 32) == sentinel_pid;
+}
+
 /*
  * Helper: populate common fields present in every event.
  * Called by all six tracepoint handlers before syscall-specific fields.
@@ -53,6 +64,7 @@ int trace_execve(struct trace_event_raw_sys_enter *ctx)
 {
     struct sentinel_event *e;
 
+    if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
     if (!e) return 0;
 
@@ -73,6 +85,7 @@ int trace_openat(struct trace_event_raw_sys_enter *ctx)
 {
     struct sentinel_event *e;
 
+    if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
     if (!e) return 0;
 
@@ -99,6 +112,7 @@ int trace_connect(struct trace_event_raw_sys_enter *ctx)
     struct sentinel_event *e;
     struct sockaddr_in sa;
 
+    if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
     if (!e) return 0;
 
@@ -129,6 +143,7 @@ int trace_setuid(struct trace_event_raw_sys_enter *ctx)
 {
     struct sentinel_event *e;
 
+    if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
     if (!e) return 0;
 
@@ -154,6 +169,7 @@ int trace_clone(struct trace_event_raw_sys_enter *ctx)
 {
     struct sentinel_event *e;
 
+    if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
     if (!e) return 0;
 
@@ -186,6 +202,7 @@ int trace_ptrace(struct trace_event_raw_sys_enter *ctx)
 {
     struct sentinel_event *e;
 
+    if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
     if (!e) return 0;
 
