@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -105,7 +106,7 @@ func (r *privilegeEscalationRule) Evaluate(event EnrichedEvent, state *RuleState
 		ContainerID: event.ContainerID,
 		Severity:    "CRITICAL",
 		Description: fmt.Sprintf("Non-root process attempted setuid(0) in container %s", event.ContainerID),
-		Evidence:    map[string]interface{}{"pid": event.PID, "comm": nullTerminated(event.Comm[:]), "uid": event.UID},
+		Evidence:    map[string]interface{}{"parent_comm": nullTerminated(event.ParentComm[:]), "ppid": event.PPID, "pid": event.PID, "comm": nullTerminated(event.Comm[:]), "uid": event.UID},
 		Timestamp:   time.Now(),
 	}
 }
@@ -151,9 +152,11 @@ func (r *reverseShellRule) Evaluate(event EnrichedEvent, state *RuleState) *Aler
 			Description: fmt.Sprintf("Reverse shell in container %s: connect to %s then %s within %dms",
 				event.ContainerID, formatIPAddr(cs.DestIP), bin, elapsed.Milliseconds()),
 			Evidence: map[string]interface{}{
-				"shell":    bin,
-				"dest_ip":  formatIPAddr(cs.DestIP),
-				"delay_ms": elapsed.Milliseconds(),
+				"parent_comm": nullTerminated(event.ParentComm[:]),
+				"ppid":        event.PPID,
+				"shell":       bin,
+				"dest_ip":     formatIPAddr(cs.DestIP),
+				"delay_ms":    elapsed.Milliseconds(),
 			},
 			Timestamp: time.Now(),
 		}
@@ -178,7 +181,7 @@ func (r *containerEscapeRule) Evaluate(event EnrichedEvent, state *RuleState) *A
 		ContainerID: event.ContainerID,
 		Severity:    "CRITICAL",
 		Description: fmt.Sprintf("Container escape attempt in %s: opened %s", event.ContainerID, filename),
-		Evidence:    map[string]interface{}{"filename": filename, "pid": event.PID},
+		Evidence:    map[string]interface{}{"parent_comm": nullTerminated(event.ParentComm[:]), "ppid": event.PPID, "filename": filename, "pid": event.PID},
 		Timestamp:   time.Now(),
 	}
 }
@@ -214,7 +217,7 @@ func (r *portScanRule) Evaluate(event EnrichedEvent, state *RuleState) *Alert {
 			ContainerID: event.ContainerID,
 			Severity:    "HIGH",
 			Description: fmt.Sprintf("Port scan in container %s: %d connects in %s", event.ContainerID, len(window), r.windowDuration),
-			Evidence:    map[string]interface{}{"connect_count": len(window)},
+			Evidence:    map[string]interface{}{"parent_comm": nullTerminated(event.ParentComm[:]), "ppid": event.PPID, "connect_count": len(window)},
 			Timestamp:   time.Now(),
 		}
 	}
@@ -238,7 +241,7 @@ func (r *reconToolRule) Evaluate(event EnrichedEvent, state *RuleState) *Alert {
 		ContainerID: event.ContainerID,
 		Severity:    "HIGH",
 		Description: fmt.Sprintf("Recon tool in container %s: %s", event.ContainerID, bin),
-		Evidence:    map[string]interface{}{"binary": bin, "path": nullTerminated(event.Filename[:])},
+		Evidence:    map[string]interface{}{"parent_comm": nullTerminated(event.ParentComm[:]), "ppid": event.PPID, "binary": bin, "path": nullTerminated(event.Filename[:])},
 		Timestamp:   time.Now(),
 	}
 }
@@ -278,8 +281,10 @@ func runAlertPrinter(alertCh <-chan Alert, done <-chan struct{}) {
 			if !ok {
 				return
 			}
-			fmt.Fprintf(os.Stderr, "[ALERT] %s | %s | %s | %s\n",
-				alert.Severity, alert.RuleName, alert.ContainerID, alert.Description)
+			ev, _ := json.Marshal(alert.Evidence)
+			fmt.Fprintf(os.Stderr, "[ALERT] %s | %s | %s | %s | evidence=%s\n",
+				alert.Severity, alert.RuleName, alert.ContainerID,
+				alert.Description, string(ev))
 		case <-done:
 			return
 		}
