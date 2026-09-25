@@ -185,9 +185,18 @@ func (e *cgroupEnricher) enrichEvents(
 	enrichedCh chan<- EnrichedEvent,
 ) {
 	for event := range rawCh {
-		containerID := lookupByPID(event.PID)
-		if containerID == "" {
-			containerID = e.lookup(event.CgroupID)
+		// Cheap path first: in-memory inode map, zero syscalls. This
+		// resolves any container the background refresh has already
+		// mapped, which is the overwhelming majority of events. Only
+		// fall back to the per-event /proc read for a genuine miss
+		// (a container not yet in the map). Doing the /proc read on
+		// every event was the load-path overhead: thousands of
+		// /proc/<pid>/cgroup opens per second.
+		containerID := e.lookup(event.CgroupID)
+		if containerID == "host" {
+			if byPID := lookupByPID(event.PID); byPID != "" {
+				containerID = byPID
+			}
 		}
 		enrichedCh <- EnrichedEvent{
 			SentinelEvent: event,
