@@ -37,3 +37,4 @@ Thumbs.db
 thesis/
 evaluation/datasets/**/*.jsonl
 ml/*.npy
+ml/figures/
