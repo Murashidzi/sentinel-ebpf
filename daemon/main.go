@@ -8,6 +8,7 @@ import (
 	"log"
 	"flag"
 	"os"
+	"time"
 	"unsafe"
 	"os/signal"
 	"syscall"
@@ -225,6 +226,24 @@ func main() {
         go extractor.runComputeLoop(featureVecCh, done)
         engine := newRuleEngine()
         go runAlertPrinter(alertCh,done)
+        // Drop-counter reader: logs a warning when the ring buffer is full
+        // and events are lost. Silence means no loss occurred.
+        go func() {
+            tick := time.NewTicker(10 * time.Second)
+            defer tick.Stop()
+            var key uint32
+            for {
+                select {
+                case <-tick.C:
+                    var val uint64
+                    if err := objs.DropCounter.Lookup(key, &val); err == nil && val > 0 {
+                        log.Printf("[DROP] %d events lost (ring buffer full)", val)
+                    }
+                case <-done:
+                    return
+                }
+            }
+        }()
         // Ring buffer reader goroutine.
         // Reads raw bytes from kernel, deserialises into SentinelEvent,
         // forwards to rawCh for enrichment.

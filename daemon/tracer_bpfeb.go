@@ -65,7 +65,8 @@ type tracerProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tracerMapSpecs struct {
-	Events *ebpf.MapSpec `ebpf:"events"`
+	DropCounter *ebpf.MapSpec `ebpf:"drop_counter"`
+	Events      *ebpf.MapSpec `ebpf:"events"`
 }
 
 // tracerObjects contains all objects after they have been loaded into the kernel.
@@ -87,11 +88,13 @@ func (o *tracerObjects) Close() error {
 //
 // It can be passed to loadTracerObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tracerMaps struct {
-	Events *ebpf.Map `ebpf:"events"`
+	DropCounter *ebpf.Map `ebpf:"drop_counter"`
+	Events      *ebpf.Map `ebpf:"events"`
 }
 
 func (m *tracerMaps) Close() error {
 	return _TracerClose(
+		m.DropCounter,
 		m.Events,
 	)
 }

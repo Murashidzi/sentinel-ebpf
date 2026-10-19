@@ -28,6 +28,23 @@ static __always_inline int is_self(void)
     return (bpf_get_current_pid_tgid() >> 32) == sentinel_pid;
 }
 
+/* Counts events dropped because the ring buffer was full.
+   Read by the daemon to report event loss. */
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u64);
+} drop_counter SEC(".maps");
+
+static __always_inline void count_drop(void)
+{
+    __u32 key = 0;
+    __u64 *val = bpf_map_lookup_elem(&drop_counter, &key);
+    if (val)
+        __sync_fetch_and_add(val, 1);
+}
+
 /*
  * Helper: populate common fields present in every event.
  * Called by all six tracepoint handlers before syscall-specific fields.
@@ -66,7 +83,7 @@ int trace_execve(struct trace_event_raw_sys_enter *ctx)
 
     if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
-    if (!e) return 0;
+    if (!e) { count_drop(); return 0; }
 
     fill_common(e, SYSCALL_EXECVE);
 
@@ -87,7 +104,7 @@ int trace_openat(struct trace_event_raw_sys_enter *ctx)
 
     if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
-    if (!e) return 0;
+    if (!e) { count_drop(); return 0; }
 
     fill_common(e, SYSCALL_OPENAT);
 
@@ -114,7 +131,7 @@ int trace_connect(struct trace_event_raw_sys_enter *ctx)
 
     if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
-    if (!e) return 0;
+    if (!e) { count_drop(); return 0; }
 
     fill_common(e, SYSCALL_CONNECT);
 
@@ -145,7 +162,7 @@ int trace_setuid(struct trace_event_raw_sys_enter *ctx)
 
     if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
-    if (!e) return 0;
+    if (!e) { count_drop(); return 0; }
 
     fill_common(e, SYSCALL_SETUID);
 
@@ -171,7 +188,7 @@ int trace_clone(struct trace_event_raw_sys_enter *ctx)
 
     if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
-    if (!e) return 0;
+    if (!e) { count_drop(); return 0; }
 
     fill_common(e, SYSCALL_CLONE);
 
@@ -204,7 +221,7 @@ int trace_ptrace(struct trace_event_raw_sys_enter *ctx)
 
     if (is_self()) return 0;
     e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
-    if (!e) return 0;
+    if (!e) { count_drop(); return 0; }
 
     fill_common(e, SYSCALL_PTRACE);
 
