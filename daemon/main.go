@@ -79,7 +79,7 @@ type EventJSON struct {
 	Filename    string `json:"filename,omitempty"`
 	DestIP      string `json:"dest_ip,omitempty"`
 	DestPort    uint16 `json:"dest_port,omitempty"`
-	NewUID      uint32 `json:"new_uid,omitempty"`
+	NewUID      uint32 `json:"new_uid"`
 	CloneFlags  uint64 `json:"clone_flags,omitempty"`
 }
 
@@ -300,7 +300,7 @@ func main() {
 		case SyscallConnect:
 			if enriched.DestIP != 0 {
 				out.DestIP = formatIP(enriched.DestIP)
-				out.DestPort = enriched.DestPort
+				out.DestPort = (enriched.DestPort & 0xff) << 8 | enriched.DestPort >> 8
 			}
 		case SyscallSetuid:
 			out.NewUID = enriched.NewUID
