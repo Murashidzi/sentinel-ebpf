@@ -27,6 +27,7 @@ scores = {
     "IsolationForest": np.load(f"{ML}/if_scores.npy"),
     "Autoencoder":     np.load(f"{ML}/ae_scores.npy"),
     "LSTM":            np.load(f"{ML}/lstm_scores.npy"),
+    "LSTM+Lineage":    np.load(f"{ML}/lstm_lin_scores.npy"),
 }
 
 norm_idx = np.where(y == 0)[0]
@@ -131,7 +132,8 @@ for label, store in [("overall AUC", overall), ("normal vs advanced AUC", advnor
         lo, hi = ci(store[n])
         print(f"  {n:16s} 95% CI [{lo:.3f}, {hi:.3f}]")
     pairs = [("Autoencoder", "IsolationForest"), ("Autoencoder", "LSTM"),
-             ("IsolationForest", "LSTM")]
+             ("IsolationForest", "LSTM"), ("LSTM+Lineage", "LSTM"),
+             ("LSTM+Lineage", "Autoencoder"), ("LSTM+Lineage", "IsolationForest")]
     for a, b in pairs:
         d = np.asarray(store[a]) - np.asarray(store[b])
         lo, hi = ci(d)
