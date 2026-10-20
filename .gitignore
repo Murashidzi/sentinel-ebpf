@@ -38,3 +38,4 @@ thesis/
 evaluation/datasets/**/*.jsonl
 ml/*.npy
 ml/figures/
+*.pdf
