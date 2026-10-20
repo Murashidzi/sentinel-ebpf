@@ -239,6 +239,9 @@ func main() {
                     if err := objs.DropCounter.Lookup(key, &val); err == nil && val > 0 {
                         log.Printf("[DROP] %d events lost (ring buffer full)", val)
                     }
+                    if hf := enricher.hostFallbacks.Load(); hf > 0 {
+                        log.Printf("[ENRICH] %d events assigned to host (container unresolved)", hf)
+                    }
                 case <-done:
                     return
                 }

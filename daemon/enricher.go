@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
         "fmt"
@@ -21,6 +22,7 @@ type cgroupEnricher struct {
 	mu               sync.RWMutex
 	inodeToContainer map[uint64]string
 	refreshInterval  time.Duration
+	hostFallbacks    atomic.Uint64
 }
 
 func newCgroupEnricher() *cgroupEnricher {
@@ -197,6 +199,9 @@ func (e *cgroupEnricher) enrichEvents(
 			if byPID := lookupByPID(event.PID); byPID != "" {
 				containerID = byPID
 			}
+		}
+		if containerID == "host" {
+			e.hostFallbacks.Add(1)
 		}
 		enrichedCh <- EnrichedEvent{
 			SentinelEvent: event,
