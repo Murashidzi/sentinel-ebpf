@@ -63,7 +63,7 @@ func isExternalIP(ipUint32 uint32) bool {
 		return false
 	}
 	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, ipUint32)
+	binary.LittleEndian.PutUint32(b, ipUint32)
 	ip := net.IP(b)
 	for _, private := range privateRanges {
 		if private.Contains(ip) {
@@ -75,7 +75,7 @@ func isExternalIP(ipUint32 uint32) bool {
 
 func formatIPAddr(ipUint32 uint32) string {
 	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, ipUint32)
+	binary.LittleEndian.PutUint32(b, ipUint32)
 	return net.IP(b).String()
 }
 
