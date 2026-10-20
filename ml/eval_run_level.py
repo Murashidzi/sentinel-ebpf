@@ -202,6 +202,30 @@ for n,(ev,ca) in scores.items():
     rec=pred[truth==1].mean(); fpr=pred[yev==0].mean(); advd=pred[yev==2].mean()
     print(f"  {n:16s}{auc:7.3f}{rec:8.3f}{fpr:7.3f}{advd:9.3f}")
 
+# Per-class: normal vs advanced AUC (threshold-free)
+print("\n=== NORM VS ADVANCED AUC (run-level) ===")
+na_idx = np.concatenate([np.arange(nN), np.arange(nN+nS, nN+nS+nA)])
+na_truth = (yev[na_idx] > 0).astype(int)
+na_store = {}
+for n,(ev,ca) in scores.items():
+    a = roc_auc_score(na_truth, ev[na_idx])
+    na_store[n] = a
+    print(f"  {n:16s} {a:.3f}")
+B2=2000; bootna=np.random.RandomState(42)
+naboot={n:[] for n in scores}
+iN=np.arange(nN); iA=np.arange(nN,nN+nA)
+ev_na={n:ev[na_idx] for n,(ev,ca) in scores.items()}
+for _ in range(B2):
+    bn=bootna.choice(iN,nN,replace=True); ba=bootna.choice(iA,nA,replace=True)
+    bi=np.concatenate([bn,ba]); tr=(np.concatenate([np.zeros(nN),np.full(nA,2)])[bi]>0).astype(int)
+    for n in scores: naboot[n].append(roc_auc_score(tr, ev_na[n][bi]))
+print("  --- differences ---")
+for a,b in [("LSTM","Autoencoder"),("LSTM","IsolationForest"),("LSTM+Lineage","LSTM")]:
+    d=np.array(naboot[a])-np.array(naboot[b])
+    lo,hi=np.percentile(d,2.5),np.percentile(d,97.5)
+    v="excludes 0" if (lo>0 or hi<0) else "includes 0"
+    print(f"  {a} - {b}: mean {d.mean():+.3f}  95% CI [{lo:+.3f}, {hi:+.3f}]  {v}")
+
 # Bootstrap CIs on AUC differences
 B=2000; boot=np.random.RandomState(42)
 idxN=np.arange(nN); idxS=np.arange(nN,nN+nS); idxA=np.arange(nN+nS,nN+nS+nA)
