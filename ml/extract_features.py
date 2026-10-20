@@ -81,32 +81,54 @@ def aggregate(win):
     return rate_vec, count_vec
 
 def build(evs):
-    """Non-overlapping windows -> rate vectors, count vectors, and syscall-ID sequences."""
-    agg_rate, agg_count, seq = [], [], []
+    """Non-overlapping windows -> rate vectors, count vectors, plain sequences,
+    and lineage-enriched sequences (3 channels per timestep)."""
+    agg_rate, agg_count, seq, seq_lin = [], [], [], []
     for i in range(0, len(evs)-WINDOW+1, WINDOW):
         win = evs[i:i+WINDOW]
         rate_vec, count_vec = aggregate(win)
         agg_rate.append(rate_vec)
         agg_count.append(count_vec)
+        # Plain sequence: syscall type IDs only (backward compatible)
         ids = [SYS_ID.get(e["syscall_type"],0) for e in win[:SEQ_LEN]]
-        ids += [0]*(SEQ_LEN-len(ids))     # pad
+        ids += [0]*(SEQ_LEN-len(ids))
         seq.append(ids)
+        # Enriched sequence: 3 channels per timestep
+        #   ch0: syscall type ID (same as plain)
+        #   ch1: parent_is_shell (1 if parent_comm is a shell, else 0)
+        #   ch2: new_parent (1 if this ppid not seen earlier in window)
+        seen_ppids = set()
+        enriched = []
+        for e in win[:SEQ_LEN]:
+            ch0 = SYS_ID.get(e["syscall_type"], 0)
+            ch1 = 1 if e.get("parent_comm", "") in SHELLS else 0
+            ppid = e.get("ppid", 0)
+            ch2 = 1 if ppid not in seen_ppids else 0
+            seen_ppids.add(ppid)
+            enriched.append([ch0, ch1, ch2])
+        while len(enriched) < SEQ_LEN:
+            enriched.append([0, 0, 0])
+        seq_lin.append(enriched)
     return (np.array(agg_rate,dtype=np.float32),
             np.array(agg_count,dtype=np.float32),
-            np.array(seq,dtype=np.int64))
+            np.array(seq,dtype=np.int64),
+            np.array(seq_lin,dtype=np.int64))
 
 classes = [("normal",0),("suspicious",1),("advanced",2)]
-Xa,Xc,Xs,y = [],[],[],[]
+Xa,Xc,Xs,Xl,y = [],[],[],[],[]
 for name,label in classes:
     evs = load_events(name)
-    a,c,s = build(evs)
+    a,c,s,l = build(evs)
     print(f"{name:11s}: {len(evs):7d} events -> {len(a):5d} windows")
-    Xa.append(a); Xc.append(c); Xs.append(s); y.append(np.full(len(a),label))
+    Xa.append(a); Xc.append(c); Xs.append(s); Xl.append(l)
+    y.append(np.full(len(a),label))
 
-Xa=np.vstack(Xa); Xc=np.vstack(Xc); Xs=np.vstack(Xs); y=np.concatenate(y)
+Xa=np.vstack(Xa); Xc=np.vstack(Xc); Xs=np.vstack(Xs)
+Xl=np.vstack(Xl); y=np.concatenate(y)
 np.save(f"{OUT}/X_aggregated.npy",Xa)
 np.save(f"{OUT}/X_counts.npy",Xc)
 np.save(f"{OUT}/X_sequence.npy",Xs)
+np.save(f"{OUT}/X_seq_lineage.npy",Xl)
 np.save(f"{OUT}/y.npy",y)
-print(f"\nsaved: X_aggregated {Xa.shape}, X_counts {Xc.shape}, X_sequence {Xs.shape}, y {y.shape}")
+print(f"\nsaved: X_aggregated {Xa.shape}, X_counts {Xc.shape}, X_sequence {Xs.shape}, X_seq_lineage {Xl.shape}, y {y.shape}")
 print("class balance:", dict(Counter(y.tolist())))
