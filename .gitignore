@@ -39,3 +39,4 @@ evaluation/datasets/**/*.jsonl
 ml/*.npy
 ml/figures/
 *.pdf
+ml/*.npz

@@ -247,3 +247,14 @@ for a,b in [("LSTM","Autoencoder"),("LSTM","IsolationForest"),
     lo,hi=np.percentile(d,2.5),np.percentile(d,97.5)
     v="excludes 0" if (lo>0 or hi<0) else "includes 0"
     print(f"  {a} - {b}: mean {d.mean():+.3f}  95% CI [{lo:+.3f}, {hi:+.3f}]  {v}")
+
+# --- Save run-level score arrays for make_figures.py (Figure 5.2) ---
+_MLOUT = os.path.expanduser("~/Projects/sentinel-ebpf/ml")
+_key = {"IsolationForest": "IF", "Autoencoder": "AE", "LSTM": "LSTM", "LSTM+Lineage": "LSTM_LIN"}
+_out = dict(yev=yev, n_train=len(Atr), n_cal=len(Aca),
+            n_test_normal=nN, n_test_susp=nS, n_test_adv=nA)
+for _n, (_ev, _ca) in scores.items():
+    _out[f"ev_{_key[_n]}"] = _ev
+    _out[f"cal_{_key[_n]}"] = _ca
+np.savez(os.path.join(_MLOUT, "run_level_scores.npz"), **_out)
+print(f"\nsaved run_level_scores.npz ({len(yev)} test windows, {len(Aca)} calibration windows)")
