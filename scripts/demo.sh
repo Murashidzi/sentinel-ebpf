@@ -20,7 +20,7 @@ sleep 4
 
 say "1. Escape pattern: open the host PID namespace handle"
 run "docker exec demo sh -c 'cat /proc/1/ns/pid'    # repeated for 4 s"
-timeout 4 docker exec demo sh -c 'while true; do cat /proc/1/ns/pid >/dev/null 2>&1; sleep 0.5; done'
+docker exec demo sh -c 'for i in 1 2 3 4 5 6 7 8; do cat /proc/1/ns/pid >/dev/null 2>&1; sleep 0.5; done'
 sleep 2
 say "Each alert names the parent process: the shell that ran cat"
 sleep 2
