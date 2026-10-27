@@ -2,9 +2,9 @@
 # 60-second terminal demo for the README, recorded with asciinema.
 # Starts the daemon showing alerts only, triggers a container-escape
 # pattern and a port scan inside a deliberately privileged test
-# container, then cleans up. Run "sudo -v" first so no password prompt
-# appears in the recording.
-cd ~/Projects/sentinel-ebpf || exit 1
+# container, then cleans up. Record it as root so no password prompt
+# can appear: sudo asciinema rec -c "bash scripts/demo.sh" docs/demo.cast
+cd "$(dirname "$(readlink -f "$0")")/.." || exit 1
 say() { printf '\n\033[1;36m# %s\033[0m\n' "$1"; sleep 1.5; }
 run() { printf '\033[1;32m$\033[0m %s\n' "$1"; sleep 1; }
 sudo pkill -9 -x sentinel 2>/dev/null
@@ -15,8 +15,7 @@ run "docker run -d --privileged --pid=host --name demo python:3.12-slim sleep in
 docker run -d --privileged --pid=host --name demo python:3.12-slim sleep infinity >/dev/null
 run "sudo ./daemon/sentinel    # attach six tracepoints, print alerts"
 sudo ./daemon/sentinel 2>&1 | grep --line-buffered "ALERT" \
-  | sed -u -E 's/([0-9a-f]{12})[0-9a-f]{52}/\1/g' \
-  | awk -F' [|] ' '{print $1" | "$2" | "$3; print "    "$5; fflush()}' &
+  | sed -u -E 's/([0-9a-f]{12})[0-9a-f]{52}/\1/g; s/^(\[ALERT\] [A-Z]+ \| [A-Z_]+ \| [0-9a-f]{12}) \| .* \| (evidence=.*)$/\1\n    \2/' &
 sleep 4
 
 say "1. Escape pattern: open the host PID namespace handle"
