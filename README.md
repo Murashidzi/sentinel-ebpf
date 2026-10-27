@@ -1,221 +1,100 @@
 # sentinel-eBPF
 
-Kernel-level syscall telemetry and unsupervised anomaly detection for Linux containers.
+**On container system-call telemetry captured with eBPF, a model that reads the *order* of system calls detected advanced attack behaviour far better than models that summarise them. Adding process lineage on top made almost no difference.**
 
-eBPF tracepoints >> Go concurrent pipeline >> offline three-model comparison >> explainable rule-based alerts.
+![Live demo: the daemon flags a container-escape pattern and a port scan](docs/demo.gif)
 
-CI: passing · License: Apache 2.0 · Kernel >= 5.8 · Go 1.22
+*60-second live run. The daemon attaches six eBPF tracepoints, then flags a container-escape pattern and a port scan. Every alert names the parent process that caused it.*
 
---- >< ---
+---
 
-## What this is
+## The result
 
-sentinel-eBPF is the artefact of an honours research project. It asks a single question: when container syscall telemetry is collected with eBPF, which behavioural representation detects attacks better, an aggregated feature vector or an ordered syscall sequence?
+Four unsupervised models were trained on normal behaviour only. They were tested on capture runs they never saw: no test window shares a run with any training window.
 
-To answer it, the system captures syscall telemetry through six eBPF tracepoints, including parent-child process lineage, processes events concurrently in a Go daemon, raises rule-based alerts online, and writes events to disk for an offline comparison of three unsupervised models.
+| Model | Input | AUC, normal vs advanced-like | Advanced-like windows caught at about 5% false alarms |
+|---|---|---|---|
+| LSTM + lineage | ordered sequence + parent info | 0.726 | 51.8% |
+| LSTM | ordered sequence | 0.715 | 49.1% |
+| Autoencoder | 9 summary features | 0.640 | 6.4% |
+| Isolation Forest | 9 summary features | 0.621 | 3.1% |
 
-The honest headline of the result is not a model leaderboard. It is this: detection rested almost entirely on process lineage features, not on syscall ordering. Removing the two lineage-derived features dropped detection to below chance. The full result, including what this means and what it does not, is in the research summary below.
+Both LSTMs beat both summary models (paired bootstrap, B = 2000, every 95% interval excludes zero). Lineage adds about 0.01 AUC to the LSTM: real, but too small to matter.
 
-Status: complete. All builds finished. Results locked and reproducible from the scripts in `ml/`.
+![ROC curves on held-out capture runs](docs/figures/fig5_2_roc.png)
 
---- >< ---
+### Why the answer changed
 
-## Research summary
+An earlier evaluation on a narrower dataset showed the opposite: the summary models led. A lineage ablation traced that lead to a shortcut. The normal workload was one long-lived process, so parent-process features separated it from attacks trivially. Three fixes reversed the ranking: a benign shell-heavy normal workload, a corrected serialisation bug, and a split that holds out whole capture runs.
 
-Title: Evaluation of Unsupervised Anomaly Detection on eBPF-Based Container Syscall Telemetry
-Supervisor: Mr. S. M. Makura, University of Pretoria
-Module: COS700 Honours Research Project, 2026
+### Limits
 
-### The comparison
+- Constructed workloads on one laptop, 12 capture runs. Not real attacks, not production traffic.
+- AUCs are moderate (0.62 to 0.73). At one attack window per hundred, about nine in ten LSTM alarms would be false. These models fit as a scoring layer next to rules, not as a standalone detector.
+- The models run offline on captured events. The live daemon raises rule-based alerts only.
+- Daemon overhead was 3.4% of system CPU on development hardware. The 2% target was not met.
 
-Three unsupervised models were trained on normal behaviour only and evaluated on unseen suspicious and advanced behaviour, under a leakage-free protocol. The normal class was split into training, threshold calibration, and false-positive test sets. All metrics are computed on 1884 unseen windows. Inference uses a paired, class-stratified bootstrap (B = 2000).
-
-| Model | Representation | AUC [95% CI] | FPR | F1 (1:1) |
-|-------|----------------|--------------|-----|----------|
-| Isolation Forest | aggregated | 0.767 [0.731, 0.804] | 0.040 | 0.195 |
-| Autoencoder | aggregated | 0.782 [0.758, 0.805] | 0.025 | 0.572 |
-| LSTM | sequence | 0.731 [0.698, 0.763] | 0.094 | 0.440 |
-
-Both aggregated models outperformed the sequence model overall. The neural and non-neural aggregated models were statistically indistinguishable. On the advanced class specifically, all three models were statistically indistinguishable, so the pre-registered hypothesis that ordering improves advanced-attack detection was not supported.
-
-### What actually drove detection
-
-A lineage ablation retrained the two aggregated models without their two lineage-derived features (shell-parent spawns and distinct-parent count). Overall AUC fell from 0.782 to 0.298 for the Autoencoder and from 0.767 to 0.454 for the Isolation Forest. Both fell below chance. Every bootstrap interval excluded zero.
-
-The comparison therefore did not isolate ordering. It compared a representation carrying process lineage against one that did not. The supported claim is narrow and honest: the representation carrying lineage detected better than the representation without it. Whether ordering helps once both representations carry the same information is open, and is the first item of future work.
-
-### Honest caveats
-
-- The per-second rate features encoded the tempo of the capture scripts rather than behaviour. A 20-event window spanned a median of 16 ms for normal workloads and about 750 ms for the attack workloads.
-- Two of the nine features were inert. `privileged_syscall_count` was always zero because the event serialisation dropped the new-UID field when it was zero. `ptrace_count` was always zero because no ptrace occurred in the captures.
-- Evaluation used a self-generated dataset on a single node. Sub-2 percent overhead was not confirmed on dedicated hardware.
-- Lineage features may partly reflect workload structure, since the normal workload was dominated by one long-lived process. This is untested on benign workloads that spawn many short-lived processes.
-
---- >< ---
-
-## System architecture
-
-![System architecture](docs/uml/system_architecture_overview.png)
-
-The online daemon captures, enriches, computes feature vectors, and raises rule-based alerts. The three models run offline on captured events. Lineage reaches the aggregated feature vector and the alert evidence, but never the token sequence.
-
---- >< ---
+---
 
 ## How it works
 
-### Layer 1 >> Linux kernel (C, libbpf, CO-RE)
+![Architecture](docs/uml/system_architecture_overview.png)
 
-Six eBPF tracepoints capture syscall activity across container namespace boundaries. CO-RE means one compiled object loads across kernel versions without recompilation.
+**Kernel (C, libbpf, CO-RE).** Six tracepoints (execve, openat, connect, setuid, clone, ptrace) record each call with its process, parent PID and parent command. The daemon's own events are dropped in-kernel. A counter records events lost when the 256 KB ring buffer is full: zero in four verification runs of the dataset workloads.
 
-| Tracepoint | Fields captured | Relevance |
-|------------|-----------------|-----------|
-| sys_enter_execve | pid, ppid, comm, parent_comm, filename, cgroup_id | Shell spawns, recon tools, process chains |
-| sys_enter_openat | pid, filename, cgroup_id | Host-namespace access, credential paths |
-| sys_enter_connect | pid, dest_ip, dest_port, cgroup_id | Outbound connections, port scans |
-| sys_enter_setuid | pid, uid, new_uid, cgroup_id | Privilege escalation to UID 0 |
-| sys_enter_clone | pid, clone_flags, cgroup_id | Namespace creation |
-| sys_enter_ptrace | pid, ptrace_request, cgroup_id | Process inspection |
+**Daemon (Go, cilium/ebpf).** Attributes each event to its container, map-first, then runs five deterministic rules. Each alert carries the process lineage as evidence.
 
-The event struct is zeroed per event (a ring-buffer slot is not cleared on reserve), and the daemon's own events are dropped in-kernel by PID filter so the tool does not observe itself. Parent fields come from the kernel task_struct via BPF_CORE_READ.
+**Offline evaluation (Python).** Captured events are cut into 20-event windows. Each window becomes a 9-feature summary vector, a syscall-type sequence, and a sequence with two lineage channels. Four models score them: Isolation Forest, Autoencoder, LSTM, and LSTM + lineage.
 
-Note from the evaluation: in the captured data, execve, openat, connect and setuid appeared in all classes; clone appeared only in normal behaviour; ptrace never fired.
+---
 
-### Layer 2 >> Go daemon (cilium/ebpf)
+## Run it
 
-Goroutines connected by typed channels read the ring buffer, enrich events with container identity, compute feature vectors, and run the rule engine. Container identity is resolved map-first: an in-memory cgroup map refreshed every five seconds, with a per-process `/proc/<pid>/cgroup` read only on a miss.
+Requires Linux kernel 5.8 or later with BTF, Go 1.22, clang, Docker, and Python with numpy, scikit-learn, scipy, torch and matplotlib.
 
-The daemon raises alerts from five deterministic rules. It does not run the ML models. Online model inference is future work.
-
-### Layer 3 >> Offline evaluation (Python)
-
-Events written in capture mode feed `ml/extract_features.py`, which emits both representations from the identical event stream over non-overlapping 20-event windows: a nine-feature aggregated vector and a 20-token syscall sequence. The three models and the full evaluation are driven by the scripts in `ml/`.
-
-The nine aggregated features: execve rate, connect rate, file-open rate, process-spawn rate, privileged-syscall count, ptrace count, shell-parent spawn count, shell-after-connect count, and distinct-parent count. The last three encode security context; the two inert features noted above are among the nine.
-
-### Explainable alerts
-
-A rule-based alert reports the rule, severity, container, a description, and an evidence set that includes the offending process, its parent command, and its parent PID. Verified on a live container-escape trigger:
-
-```
-[ALERT] CRITICAL | CONTAINER_ESCAPE | <container> | opened /proc/1/ns/pid |
-  evidence={"filename":"/proc/1/ns/pid","parent_comm":"sh","pid":7368,"ppid":7362}
-```
-
-The alert gives a responder the process lineage of an event rather than a bare identifier. Integrating the per-container baseline deviation directly into the alert is future work.
-
---- >< ---
-
-## Runtime performance
-
-Overhead was profiled on the development machine and reduced from 8.4 percent to 3.4 percent of system CPU through four fixes, each found with a named tool and measured before and after.
-
-| Fix | Found with | Effect |
-|-----|-----------|--------|
-| Kernel self-event filter | pidstat | idle CPU 67.6% to 1.3% |
-| Cache-miss walk removal | strace | removed tens of thousands of directory reads per second |
-| Map-first enrichment | perf | removed a per-event /proc read |
-| Zero-copy event decode | perf | removed reflection-based deserialisation, the top user-space cost |
-
-The residual 3.4 percent is dominated by Go runtime garbage collection and scheduler contention on shared hardware, not by the instrumentation. Sub-2 percent is assessed as achievable but was not confirmed; dedicated-hardware benchmarking is future work.
-
---- >< ---
-
-## Evaluation design
-
-Models train on normal behaviour only. Suspicious and advanced windows are evaluation-only.
-
-| Class | Description | Examples |
-|-------|-------------|----------|
-| Normal | Legitimate multi-process workload | subprocess spawns, file reads and writes, outbound calls to an internal service |
-| Suspicious | Legitimate tools on illegitimate targets | reading /etc/shadow and /root/.ssh, enumerating setuid binaries, privilege recon |
-| Advanced | Attack patterns, no live exploits | nested shell chains, reverse-shell connect-then-spawn, setuid escalation, setuid-binary planting |
-
-Dataset: 3027 windows total, 1345 normal, 699 suspicious, 983 advanced. Metrics: AUC, per-class AUC, precision, recall, F1 at 1:1 prevalence, and false-positive rate, per model. Datasets are regenerated by the capture scripts in `scripts/`, not stored in the repository.
-
---- >< ---
-
-## Reproducing the results
-
-Prerequisites: Linux kernel >= 5.8, Go 1.22+, clang/LLVM, Docker, Python with numpy, pandas, scikit-learn, scipy, torch.
+**Live demo** (the container is deliberately privileged to simulate escape conditions):
 
 ```bash
-git clone https://github.com/Murashidzi/sentinel-ebpf.git
-cd sentinel-ebpf
-
-# build the eBPF object and the daemon
+git clone https://github.com/Murashidzi/sentinel-ebpf.git && cd sentinel-ebpf
 cd daemon && go generate ./... && go build -o sentinel . && cd ..
-
-# capture the three behavioural classes (writes to evaluation/datasets/)
-sudo scripts/capture_normal.sh 360
-sudo scripts/capture_suspicious.sh 360
-sudo scripts/capture_advanced.sh 360
-
-# extract both representations, train and score the models, then the results
-python3 ml/extract_features.py
-python3 ml/train_isolation_forest.py
-python3 ml/train_autoencoder.py
-python3 ml/train_lstm.py
-python3 ml/results_table.py        # the single source of truth for every reported number
-python3 ml/ablation_lineage.py     # the RQ3 lineage ablation
-python3 ml/make_figures.py         # Chapter 5 figures
+sudo -v && bash scripts/demo.sh
 ```
 
-To run the live daemon and see rule-based alerts:
+**Reproduce the evaluation:**
 
 ```bash
-sudo daemon/sentinel            # alerts to stderr
-sudo daemon/sentinel -emit-events   # also writes per-event JSON for capture
+sudo -v && bash scripts/capture_all.sh 180    # 12 capture runs, about 40 minutes
+python3 ml/extract_features.py
+python3 ml/train_isolation_forest.py && python3 ml/train_autoencoder.py
+python3 ml/train_lstm.py && python3 ml/train_lstm_lineage.py
+python3 ml/results_table.py       # window-level split
+python3 ml/eval_run_level.py      # run-level split (primary)
+python3 ml/ablation_lineage.py    # lineage ablation
+python3 ml/make_figures.py && python3 ml/make_diagrams.py
 ```
 
---- >< ---
+Capture timing varies between runs, so a fresh capture gives close but not identical numbers. Exact numbers reproduce only from the same capture files.
+
+---
 
 ## Repository layout
 
 ```
-sentinel-ebpf/
-├── kernel/
-│   ├── tracer.bpf.c              eBPF programs (C, libbpf, CO-RE)
-│   └── headers.h                 shared event struct
-├── daemon/
-│   ├── main.go                   pipeline orchestration
-│   ├── enricher.go               cgroup map-first container enrichment
-│   ├── feature_extractor.go      online feature vectors (printed)
-│   ├── rule_engine.go            five deterministic rules, alert evidence
-│   └── tracer_bpf*.go            bpf2go bindings
-├── ml/
-│   ├── extract_features.py       both representations from one event stream
-│   ├── train_isolation_forest.py
-│   ├── train_autoencoder.py
-│   ├── train_lstm.py
-│   ├── results_table.py          leakage-free metrics and paired bootstrap
-│   ├── ablation_lineage.py       RQ3 lineage ablation
-│   ├── make_figures.py           result figures
-│   └── make_diagrams.py          architecture and design figures
-├── evaluation/datasets/          gitignored; regenerated by scripts
-├── scripts/
-│   ├── capture_normal.sh
-│   ├── capture_suspicious.sh
-│   ├── capture_advanced.sh
-│   └── measure_overhead.sh
-├── docs/uml/                     diagrams
-└── LICENSE                       Apache 2.0
+kernel/    tracer.bpf.c, headers.h          eBPF programs
+daemon/    main.go, enricher.go,            pipeline, container attribution,
+           rule_engine.go,                  rules, online features
+           feature_extractor.go
+ml/        extract_features.py              windows and three representations
+           train_*.py                       four models
+           results_table.py                 window-level metrics, bootstrap
+           eval_run_level.py                run-level split (primary)
+           ablation_lineage.py              lineage ablation
+           make_figures.py, make_diagrams.py
+scripts/   capture_*.sh, capture_all.sh     dataset capture
+           demo.sh                          the recorded demo
+docs/      demo.gif, figures, diagrams
 ```
 
---- >< ---
+---
 
-## Technology stack
-
-| Layer | Technology |
-|-------|-----------|
-| Kernel instrumentation | C, libbpf, CO-RE, clang/LLVM |
-| User-space daemon | Go 1.22, cilium/ebpf |
-| Offline models | Python, PyTorch (Autoencoder, LSTM), scikit-learn (Isolation Forest) |
-| Evaluation | numpy, pandas, scipy, matplotlib |
-| Profiling | pidstat, strace, perf |
-| CI | GitHub Actions |
-
---- >< ---
-
-## License
-
-Apache 2.0. See LICENSE.
+COS700 Honours research, University of Pretoria, 2026. Supervisor: Mr S. M. Makura. Apache 2.0.
