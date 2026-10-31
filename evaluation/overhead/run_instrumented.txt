@@ -1,0 +1,18 @@
+cores: 8   measurement window: 120s per pass
+
+=== PASS 1: baseline (workload only, no daemon) ===
+baseline system CPU busy: 18.3%
+ovh_worker
+ovh_backend
+
+=== PASS 2: instrumented (workload + daemon) ===
+daemon pid: 707577
+ovh_worker
+ovh_backend
+
+=== RESULTS ===
+daemon own CPU (% of one core):        5.69%
+daemon own CPU (% of 8-core system): .711%
+baseline system busy:                  18.3%
+primary overhead figure = daemon own CPU as system %: .711%
+target: < 2%

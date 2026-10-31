@@ -1,0 +1,17 @@
+test container: 538975feb7de   daemon commit: ed04ae5
+  round 1: ptrace() returned 0
+  round 2: ptrace() returned 0
+  round 3: ptrace() returned 0
+  round 4: ptrace() returned 0
+  round 5: ptrace() returned 0
+
+=== B9: tracepoint coverage (events attributed to the test container) ===
+  PASS  execve       10 events   trigger: /bin/true
+  PASS  openat      153 events   trigger: cat
+  PASS  connect       5 events   trigger: Python socket connect
+  PASS  setuid       40 events   trigger: os.setuid(0)
+  PASS  clone        15 events   trigger: os.fork()
+  PASS  ptrace        5 events   trigger: ctypes ptrace(0,0,0,0)
+
+  6 of 6 tracepoints PASS
+  [DROP] warnings during the test: 0

@@ -1,0 +1,171 @@
+
+==============================================================================
+STEP 0  Reproduce the locked run-level models (re-executes ml/eval_run_level.py)
+==============================================================================
+  test windows: normal 2771, suspicious 4686, advanced-like 1416
+  IsolationForest  AUC 0.638 (locked 0.638)  max |score diff| 0.00e+00  REPRODUCED
+  Autoencoder      AUC 0.642 (locked 0.642)  max |score diff| 0.00e+00  REPRODUCED
+  LSTM             AUC 0.670 (locked 0.670)  max |score diff| 0.00e+00  REPRODUCED
+  LSTM+Lineage     AUC 0.678 (locked 0.678)  max |score diff| 0.00e+00  REPRODUCED
+  self-check IsolationForest  rank AUC vs sklearn |difference| 0.0e+00
+  self-check Autoencoder      rank AUC vs sklearn |difference| 6.0e-08
+  self-check LSTM             rank AUC vs sklearn |difference| 6.0e-08
+  self-check LSTM+Lineage     rank AUC vs sklearn |difference| 1.2e-07
+
+==============================================================================
+B1 (comment 5.8)  Threshold metrics, run-level, thresholds fixed, paired class-stratified bootstrap
+==============================================================================
+  model           metric             point  boot mean          95% interval
+  IsolationForest recall             0.037      0.037      [0.032, 0.041]
+  IsolationForest FPR                0.043      0.043      [0.036, 0.051]
+  IsolationForest precision_1to1     0.460      0.461      [0.407, 0.516]
+  IsolationForest F1_1to1            0.068      0.068      [0.060, 0.076]
+  IsolationForest adv_detection      0.031      0.031      [0.022, 0.040]
+  Autoencoder     recall             0.060      0.060      [0.054, 0.066]
+  Autoencoder     FPR                0.048      0.048      [0.040, 0.056]
+  Autoencoder     precision_1to1     0.555      0.556      [0.509, 0.606]
+  Autoencoder     F1_1to1            0.108      0.108      [0.098, 0.119]
+  Autoencoder     adv_detection      0.064      0.064      [0.052, 0.077]
+  LSTM            recall             0.402      0.403      [0.390, 0.415]
+  LSTM            FPR                0.041      0.041      [0.034, 0.049]
+  LSTM            precision_1to1     0.907      0.907      [0.891, 0.923]
+  LSTM            F1_1to1            0.558      0.558      [0.545, 0.570]
+  LSTM            adv_detection      0.491      0.490      [0.464, 0.516]
+  LSTM+Lineage    recall             0.429      0.429      [0.416, 0.441]
+  LSTM+Lineage    FPR                0.051      0.050      [0.043, 0.059]
+  LSTM+Lineage    precision_1to1     0.895      0.895      [0.878, 0.910]
+  LSTM+Lineage    F1_1to1            0.580      0.580      [0.567, 0.592]
+  LSTM+Lineage    adv_detection      0.518      0.518      [0.492, 0.544]
+
+==============================================================================
+B2 (comment 5.13)  Class-pair AUCs with 95% intervals, run-level
+==============================================================================
+  model           pair                             point          95% interval
+  IsolationForest normal vs suspicious             0.643      [0.628, 0.656]
+  IsolationForest normal vs advanced-like          0.621      [0.604, 0.639]
+  IsolationForest suspicious vs advanced-like      0.476      [0.459, 0.493]
+  Autoencoder     normal vs suspicious             0.643      [0.630, 0.656]
+  Autoencoder     normal vs advanced-like          0.640      [0.623, 0.657]
+  Autoencoder     suspicious vs advanced-like      0.501      [0.484, 0.518]
+  LSTM            normal vs suspicious             0.657      [0.645, 0.668]
+  LSTM            normal vs advanced-like          0.715      [0.695, 0.733]
+  LSTM            suspicious vs advanced-like      0.584      [0.566, 0.603]
+  LSTM+Lineage    normal vs suspicious             0.664      [0.652, 0.675]
+  LSTM+Lineage    normal vs advanced-like          0.726      [0.707, 0.745]
+  LSTM+Lineage    suspicious vs advanced-like      0.599      [0.581, 0.618]
+
+  Paired differences, normal vs suspicious AUC:
+    LSTM - Autoencoder: mean +0.014  95% interval [-0.001, +0.030]  includes 0
+    LSTM - IsolationForest: mean +0.014  95% interval [+0.001, +0.028]  excludes 0
+    LSTM+Lineage - LSTM: mean +0.007  95% interval [+0.004, +0.010]  excludes 0
+
+==============================================================================
+B3 (comment 5.7)  TPR at common false-positive rates, run-level
+==============================================================================
+  TPR = highest true-positive rate on the ROC curve with FPR <= target.
+  The operating point is chosen on the test normal windows, so this is a
+  comparison at equal FPR, not a deployable threshold.
+  model              FPR 1%   FPR 5%  FPR 10%
+  IsolationForest     0.003    0.045    0.116
+  Autoencoder         0.013    0.063    0.170
+  LSTM                0.285    0.407    0.444
+  LSTM+Lineage        0.309    0.429    0.465
+
+==============================================================================
+B4 (comment 5.18)  Moving-block bootstrap within each test run, run-level
+==============================================================================
+  strata (windows kept in time order): worker run 3 2301, shell-heavy run 3 470, suspicious run 3 4686, advanced-like run 3 1416
+
+  Block length 25 windows:
+  difference                    measure         block interval          iid interval width ratio
+  LSTM - Autoencoder            AUC       [+0.014, +0.041]    [+0.014, +0.043]        0.95  excludes 0
+  LSTM - Autoencoder            N-A       [+0.058, +0.090]    [+0.055, +0.094]        0.82  excludes 0
+  LSTM - IsolationForest        AUC       [+0.020, +0.046]    [+0.021, +0.045]        1.05  excludes 0
+  LSTM - IsolationForest        N-A       [+0.079, +0.107]    [+0.077, +0.110]        0.87  excludes 0
+  LSTM+Lineage - LSTM           AUC       [+0.006, +0.011]    [+0.006, +0.010]        1.00  excludes 0
+  LSTM+Lineage - LSTM           N-A       [+0.008, +0.016]    [+0.008, +0.016]        0.95  excludes 0
+
+  Block length 100 windows:
+  difference                    measure         block interval          iid interval width ratio
+  LSTM - Autoencoder            AUC       [+0.015, +0.040]    [+0.014, +0.043]        0.88  excludes 0
+  LSTM - Autoencoder            N-A       [+0.057, +0.089]    [+0.055, +0.094]        0.83  excludes 0
+  LSTM - IsolationForest        AUC       [+0.020, +0.045]    [+0.021, +0.045]        1.02  excludes 0
+  LSTM - IsolationForest        N-A       [+0.080, +0.107]    [+0.077, +0.110]        0.84  excludes 0
+  LSTM+Lineage - LSTM           AUC       [+0.006, +0.011]    [+0.006, +0.010]        0.93  excludes 0
+  LSTM+Lineage - LSTM           N-A       [+0.010, +0.016]    [+0.008, +0.016]        0.74  excludes 0
+
+  iid interval = the ordinary window bootstrap (B1/B2 draws). Ratio > 1 means the
+  block bootstrap, which keeps neighbouring windows together, gives a wider interval.
+
+==============================================================================
+B5a (comment 5.25)  Permutation importance, IF and AE, drop in normal-vs-advanced AUC
+==============================================================================
+  IsolationForest: baseline normal-vs-advanced AUC 0.621 (scaler and model fixed, 30 repeats)
+    execve_rate        drop +0.0031  SD 0.0041
+    connect_rate       drop -0.0122  SD 0.0026
+    fileopen_rate      drop +0.0099  SD 0.0041
+    spawn_rate         drop -0.0099  SD 0.0018
+    priv_count         drop +0.1281  SD 0.0061
+    ptrace_count       drop +0.0000  SD 0.0000
+    unusual_parent     drop +0.0121  SD 0.0030
+    shell_after_conn   drop +0.0060  SD 0.0034
+    depth              drop +0.0265  SD 0.0029
+  Autoencoder: baseline normal-vs-advanced AUC 0.640 (scaler and model fixed, 30 repeats)
+    execve_rate        drop +0.0227  SD 0.0035
+    connect_rate       drop +0.0168  SD 0.0032
+    fileopen_rate      drop +0.0226  SD 0.0048
+    spawn_rate         drop +0.0208  SD 0.0019
+    priv_count         drop +0.1055  SD 0.0063
+    ptrace_count       drop +0.0000  SD 0.0000
+    unusual_parent     drop +0.0327  SD 0.0038
+    shell_after_conn   drop +0.0356  SD 0.0057
+    depth              drop +0.0220  SD 0.0032
+
+==============================================================================
+B5b (comment 5.25)  Order-shuffle test, plain LSTM (already-trained model)
+==============================================================================
+  Tokens shuffled inside each test window: same calls, order destroyed. 10 repeats.
+  overall AUC            unshuffled 0.670   shuffled 0.590 (SD 0.001)
+  normal vs advanced-like unshuffled 0.715   shuffled 0.620 (SD 0.001)
+
+==============================================================================
+B6 (comment 3.19)  IF and AE retrained on count features, run-level
+==============================================================================
+  windows: train 2965, calibration 2793, test 8873 (identical windows; the five shared features match the rate data exactly)
+  model               AUC          interval  N-A AUC          interval  recall    FPR
+  IF (counts)       0.602  [0.590, 0.615]    0.644  [0.627, 0.662]   0.051  0.056
+  AE (counts)       0.629  [0.618, 0.641]    0.662  [0.644, 0.680]   0.160  0.047
+  IsolationForest   0.638  [0.624, 0.651]    0.621  [0.604, 0.639]   0.037  0.043
+  Autoencoder       0.642  [0.629, 0.656]    0.640  [0.623, 0.657]   0.060  0.048
+  LSTM              0.670  [0.659, 0.680]    0.715  [0.695, 0.733]   0.402  0.041
+  LSTM+Lineage      0.678  [0.667, 0.689]    0.726  [0.707, 0.745]   0.429  0.051
+
+  Paired differences:
+    AUC  IF (counts) - IsolationForest: mean -0.035  95% interval [-0.046, -0.024]  excludes 0
+    N-A  IF (counts) - IsolationForest: mean +0.023  95% interval [+0.010, +0.036]  excludes 0
+    AUC  AE (counts) - Autoencoder: mean -0.013  95% interval [-0.026, +0.001]  includes 0
+    N-A  AE (counts) - Autoencoder: mean +0.022  95% interval [+0.006, +0.039]  excludes 0
+    AUC  LSTM - IF (counts): mean +0.068  95% interval [+0.061, +0.075]  excludes 0
+    N-A  LSTM - IF (counts): mean +0.071  95% interval [+0.062, +0.080]  excludes 0
+    AUC  LSTM - AE (counts): mean +0.041  95% interval [+0.034, +0.048]  excludes 0
+    N-A  LSTM - AE (counts): mean +0.052  95% interval [+0.042, +0.062]  excludes 0
+
+==============================================================================
+B8 (comment 5.6)  Held-out benign workload: trained and calibrated on original-normal only
+==============================================================================
+  train: original-normal run 1   calibration: original-normal run 2
+  never seen: all three shell-heavy runs. Attack run: advanced-like run 3.
+  windows: train 2488, calibration 2376, shell-heavy runs [477, 417, 470], original-normal run 3 2301, advanced-like run 3 1416
+
+  model            FPR sh1 FPR sh2 FPR sh3  FPR all  AUC shell vs adv  AUC orig3 vs adv
+  IsolationForest    0.184   0.182   0.147    0.171             0.432             0.667
+  Autoencoder        0.101   0.091   0.102    0.098             0.411             0.684
+  LSTM               0.442   0.451   0.455    0.449             0.542             0.736
+  LSTM+Lineage       0.461   0.458   0.472    0.464             0.542             0.735
+
+  Threshold: 95th percentile of calibration (original-normal run 2) scores, so the
+  expected FPR on familiar normal behaviour is about 0.05.
+
+==============================================================================
+Done. Results written to ml/revision3_results.json
+==============================================================================

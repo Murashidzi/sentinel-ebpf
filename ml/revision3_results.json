@@ -1,0 +1,646 @@
+{
+  "seed": 42,
+  "B": 2000,
+  "step0": {
+    "IsolationForest": {
+      "auc": 0.637631,
+      "max_score_diff_vs_locked": 0.0,
+      "reproduced": true
+    },
+    "Autoencoder": {
+      "auc": 0.642362,
+      "max_score_diff_vs_locked": 0.0,
+      "reproduced": true
+    },
+    "LSTM": {
+      "auc": 0.670194,
+      "max_score_diff_vs_locked": 0.0,
+      "reproduced": true
+    },
+    "LSTM+Lineage": {
+      "auc": 0.678174,
+      "max_score_diff_vs_locked": 0.0,
+      "reproduced": true
+    }
+  },
+  "B1": {
+    "IsolationForest": {
+      "recall": {
+        "point": 0.036545,
+        "mean": 0.03653,
+        "lo": 0.032117,
+        "hi": 0.041298
+      },
+      "FPR": {
+        "point": 0.042945,
+        "mean": 0.04284,
+        "lo": 0.035727,
+        "hi": 0.050523
+      },
+      "precision_1to1": {
+        "point": 0.459747,
+        "mean": 0.460824,
+        "lo": 0.4073,
+        "hi": 0.515834
+      },
+      "F1_1to1": {
+        "point": 0.067709,
+        "mean": 0.06768,
+        "lo": 0.059636,
+        "hi": 0.076218
+      },
+      "adv_detection": {
+        "point": 0.031073,
+        "mean": 0.03113,
+        "lo": 0.021893,
+        "hi": 0.040254
+      }
+    },
+    "Autoencoder": {
+      "recall": {
+        "point": 0.05998,
+        "mean": 0.059971,
+        "lo": 0.054245,
+        "hi": 0.066044
+      },
+      "FPR": {
+        "point": 0.047997,
+        "mean": 0.047961,
+        "lo": 0.040058,
+        "hi": 0.056306
+      },
+      "precision_1to1": {
+        "point": 0.555489,
+        "mean": 0.55611,
+        "lo": 0.509316,
+        "hi": 0.605549
+      },
+      "F1_1to1": {
+        "point": 0.10827,
+        "mean": 0.108245,
+        "lo": 0.098417,
+        "hi": 0.118581
+      },
+      "adv_detection": {
+        "point": 0.064266,
+        "mean": 0.064489,
+        "lo": 0.05226,
+        "hi": 0.076977
+      }
+    },
+    "LSTM": {
+      "recall": {
+        "point": 0.402491,
+        "mean": 0.402561,
+        "lo": 0.389708,
+        "hi": 0.414946
+      },
+      "FPR": {
+        "point": 0.04114,
+        "mean": 0.041237,
+        "lo": 0.033562,
+        "hi": 0.04908
+      },
+      "precision_1to1": {
+        "point": 0.907264,
+        "mean": 0.907134,
+        "lo": 0.890794,
+        "hi": 0.922964
+      },
+      "F1_1to1": {
+        "point": 0.557609,
+        "mean": 0.557619,
+        "lo": 0.544516,
+        "hi": 0.570039
+      },
+      "adv_detection": {
+        "point": 0.490819,
+        "mean": 0.490461,
+        "lo": 0.463983,
+        "hi": 0.516261
+      }
+    },
+    "LSTM+Lineage": {
+      "recall": {
+        "point": 0.42904,
+        "mean": 0.429077,
+        "lo": 0.416421,
+        "hi": 0.441495
+      },
+      "FPR": {
+        "point": 0.050523,
+        "mean": 0.050468,
+        "lo": 0.042584,
+        "hi": 0.059184
+      },
+      "precision_1to1": {
+        "point": 0.894647,
+        "mean": 0.894809,
+        "lo": 0.878235,
+        "hi": 0.910218
+      },
+      "F1_1to1": {
+        "point": 0.579955,
+        "mean": 0.579992,
+        "lo": 0.567294,
+        "hi": 0.592159
+      },
+      "adv_detection": {
+        "point": 0.518362,
+        "mean": 0.518054,
+        "lo": 0.491525,
+        "hi": 0.544492
+      }
+    }
+  },
+  "B2": {
+    "auc": {
+      "IsolationForest": {
+        "normal vs suspicious": {
+          "point": 0.642598,
+          "lo": 0.628398,
+          "hi": 0.656176
+        },
+        "normal vs advanced-like": {
+          "point": 0.621194,
+          "lo": 0.604162,
+          "hi": 0.639114
+        },
+        "suspicious vs advanced-like": {
+          "point": 0.476042,
+          "lo": 0.458946,
+          "hi": 0.493446
+        }
+      },
+      "Autoencoder": {
+        "normal vs suspicious": {
+          "point": 0.643009,
+          "lo": 0.629571,
+          "hi": 0.656434
+        },
+        "normal vs advanced-like": {
+          "point": 0.64022,
+          "lo": 0.622593,
+          "hi": 0.657184
+        },
+        "suspicious vs advanced-like": {
+          "point": 0.500946,
+          "lo": 0.484462,
+          "hi": 0.518421
+        }
+      },
+      "LSTM": {
+        "normal vs suspicious": {
+          "point": 0.656785,
+          "lo": 0.644937,
+          "hi": 0.668103
+        },
+        "normal vs advanced-like": {
+          "point": 0.714569,
+          "lo": 0.694992,
+          "hi": 0.733359
+        },
+        "suspicious vs advanced-like": {
+          "point": 0.584377,
+          "lo": 0.566147,
+          "hi": 0.602731
+        }
+      },
+      "LSTM+Lineage": {
+        "normal vs suspicious": {
+          "point": 0.663676,
+          "lo": 0.651915,
+          "hi": 0.675079
+        },
+        "normal vs advanced-like": {
+          "point": 0.726155,
+          "lo": 0.707384,
+          "hi": 0.744576
+        },
+        "suspicious vs advanced-like": {
+          "point": 0.599159,
+          "lo": 0.581074,
+          "hi": 0.618245
+        }
+      }
+    },
+    "diff_normal_vs_suspicious": {
+      "LSTM - Autoencoder": {
+        "mean": 0.013862,
+        "lo": -0.001242,
+        "hi": 0.029796
+      },
+      "LSTM - IsolationForest": {
+        "mean": 0.014287,
+        "lo": 0.001083,
+        "hi": 0.027641
+      },
+      "LSTM+Lineage - LSTM": {
+        "mean": 0.006893,
+        "lo": 0.004172,
+        "hi": 0.009517
+      }
+    }
+  },
+  "B3": {
+    "IsolationForest": {
+      "1%": 0.002622,
+      "5%": 0.044576,
+      "10%": 0.116355
+    },
+    "Autoencoder": {
+      "1%": 0.013274,
+      "5%": 0.063422,
+      "10%": 0.170272
+    },
+    "LSTM": {
+      "1%": 0.285316,
+      "5%": 0.407244,
+      "10%": 0.443625
+    },
+    "LSTM+Lineage": {
+      "1%": 0.308587,
+      "5%": 0.42904,
+      "10%": 0.465093
+    }
+  },
+  "B4": {
+    "block_25": {
+      "LSTM - Autoencoder | AUC": {
+        "mean": 0.027083,
+        "lo": 0.013662,
+        "hi": 0.040701,
+        "iid_lo": 0.014212,
+        "iid_hi": 0.042677,
+        "width_ratio": 0.949903
+      },
+      "LSTM - Autoencoder | N-A": {
+        "mean": 0.073427,
+        "lo": 0.05815,
+        "hi": 0.089811,
+        "iid_lo": 0.055193,
+        "iid_hi": 0.09397,
+        "width_ratio": 0.816489
+      },
+      "LSTM - IsolationForest | AUC": {
+        "mean": 0.032356,
+        "lo": 0.019795,
+        "hi": 0.045872,
+        "iid_lo": 0.020658,
+        "iid_hi": 0.045407,
+        "width_ratio": 1.053659
+      },
+      "LSTM - IsolationForest | N-A": {
+        "mean": 0.092943,
+        "lo": 0.078535,
+        "hi": 0.106746,
+        "iid_lo": 0.077242,
+        "iid_hi": 0.1095,
+        "width_ratio": 0.874543
+      },
+      "LSTM+Lineage - LSTM | AUC": {
+        "mean": 0.008326,
+        "lo": 0.005958,
+        "hi": 0.010763,
+        "iid_lo": 0.005599,
+        "iid_hi": 0.010405,
+        "width_ratio": 0.999792
+      },
+      "LSTM+Lineage - LSTM | N-A": {
+        "mean": 0.012332,
+        "lo": 0.008461,
+        "hi": 0.016045,
+        "iid_lo": 0.007699,
+        "iid_hi": 0.01565,
+        "width_ratio": 0.953842
+      }
+    },
+    "block_100": {
+      "LSTM - Autoencoder | AUC": {
+        "mean": 0.027022,
+        "lo": 0.014655,
+        "hi": 0.039789,
+        "iid_lo": 0.014212,
+        "iid_hi": 0.042677,
+        "width_ratio": 0.882979
+      },
+      "LSTM - Autoencoder | N-A": {
+        "mean": 0.073017,
+        "lo": 0.057063,
+        "hi": 0.089168,
+        "iid_lo": 0.055193,
+        "iid_hi": 0.09397,
+        "width_ratio": 0.827939
+      },
+      "LSTM - IsolationForest | AUC": {
+        "mean": 0.032577,
+        "lo": 0.020131,
+        "hi": 0.045446,
+        "iid_lo": 0.020658,
+        "iid_hi": 0.045407,
+        "width_ratio": 1.02287
+      },
+      "LSTM - IsolationForest | N-A": {
+        "mean": 0.093352,
+        "lo": 0.079584,
+        "hi": 0.106567,
+        "iid_lo": 0.077242,
+        "iid_hi": 0.1095,
+        "width_ratio": 0.836475
+      },
+      "LSTM+Lineage - LSTM | AUC": {
+        "mean": 0.008456,
+        "lo": 0.006259,
+        "hi": 0.010744,
+        "iid_lo": 0.005599,
+        "iid_hi": 0.010405,
+        "width_ratio": 0.933208
+      },
+      "LSTM+Lineage - LSTM | N-A": {
+        "mean": 0.012479,
+        "lo": 0.00962,
+        "hi": 0.015516,
+        "iid_lo": 0.007699,
+        "iid_hi": 0.01565,
+        "width_ratio": 0.741542
+      }
+    }
+  },
+  "B5a": {
+    "IsolationForest": {
+      "base_N-A": 0.621194,
+      "execve_rate": {
+        "mean_drop": 0.00307,
+        "sd": 0.004055
+      },
+      "connect_rate": {
+        "mean_drop": -0.012249,
+        "sd": 0.002609
+      },
+      "fileopen_rate": {
+        "mean_drop": 0.009875,
+        "sd": 0.004132
+      },
+      "spawn_rate": {
+        "mean_drop": -0.009926,
+        "sd": 0.001781
+      },
+      "priv_count": {
+        "mean_drop": 0.128056,
+        "sd": 0.006071
+      },
+      "ptrace_count": {
+        "mean_drop": 0.0,
+        "sd": 0.0
+      },
+      "unusual_parent": {
+        "mean_drop": 0.012068,
+        "sd": 0.003049
+      },
+      "shell_after_conn": {
+        "mean_drop": 0.006006,
+        "sd": 0.003434
+      },
+      "depth": {
+        "mean_drop": 0.026457,
+        "sd": 0.002856
+      }
+    },
+    "Autoencoder": {
+      "base_N-A": 0.64022,
+      "execve_rate": {
+        "mean_drop": 0.022701,
+        "sd": 0.003518
+      },
+      "connect_rate": {
+        "mean_drop": 0.016759,
+        "sd": 0.003189
+      },
+      "fileopen_rate": {
+        "mean_drop": 0.022561,
+        "sd": 0.004805
+      },
+      "spawn_rate": {
+        "mean_drop": 0.020751,
+        "sd": 0.00193
+      },
+      "priv_count": {
+        "mean_drop": 0.105477,
+        "sd": 0.006273
+      },
+      "ptrace_count": {
+        "mean_drop": 0.0,
+        "sd": 0.0
+      },
+      "unusual_parent": {
+        "mean_drop": 0.032734,
+        "sd": 0.003846
+      },
+      "shell_after_conn": {
+        "mean_drop": 0.035644,
+        "sd": 0.005675
+      },
+      "depth": {
+        "mean_drop": 0.02198,
+        "sd": 0.003164
+      }
+    }
+  },
+  "B5b": {
+    "unshuffled": {
+      "AUC": 0.670194,
+      "N-A": 0.714569
+    },
+    "shuffled": {
+      "AUC_mean": 0.590117,
+      "AUC_sd": 0.000767,
+      "N-A_mean": 0.620065,
+      "N-A_sd": 0.000963
+    }
+  },
+  "B6": {
+    "models": {
+      "IF (counts)": {
+        "AUC": 0.602487,
+        "AUC_lo": 0.590109,
+        "AUC_hi": 0.614508,
+        "N-A": 0.643962,
+        "N-A_lo": 0.626703,
+        "N-A_hi": 0.661635,
+        "recall": 0.051131,
+        "recall_lo": 0.045882,
+        "recall_hi": 0.056539,
+        "FPR": 0.055576,
+        "FPR_lo": 0.047636,
+        "FPR_hi": 0.064246
+      },
+      "AE (counts)": {
+        "AUC": 0.629272,
+        "AUC_lo": 0.617687,
+        "AUC_hi": 0.640578,
+        "N-A": 0.662004,
+        "N-A_lo": 0.644208,
+        "N-A_hi": 0.680239,
+        "recall": 0.160275,
+        "recall_lo": 0.151262,
+        "recall_hi": 0.169289,
+        "FPR": 0.046914,
+        "FPR_lo": 0.039336,
+        "FPR_hi": 0.054502
+      },
+      "IsolationForest": {
+        "AUC": 0.637631,
+        "AUC_lo": 0.624098,
+        "AUC_hi": 0.650539,
+        "N-A": 0.621194,
+        "N-A_lo": 0.604162,
+        "N-A_hi": 0.639114,
+        "recall": 0.036545,
+        "recall_lo": 0.032117,
+        "recall_hi": 0.041298,
+        "FPR": 0.042945,
+        "FPR_lo": 0.035727,
+        "FPR_hi": 0.050523
+      },
+      "Autoencoder": {
+        "AUC": 0.642362,
+        "AUC_lo": 0.628898,
+        "AUC_hi": 0.655519,
+        "N-A": 0.64022,
+        "N-A_lo": 0.622593,
+        "N-A_hi": 0.657184,
+        "recall": 0.05998,
+        "recall_lo": 0.054245,
+        "recall_hi": 0.066044,
+        "FPR": 0.047997,
+        "FPR_lo": 0.040058,
+        "FPR_hi": 0.056306
+      },
+      "LSTM": {
+        "AUC": 0.670194,
+        "AUC_lo": 0.659396,
+        "AUC_hi": 0.680481,
+        "N-A": 0.714569,
+        "N-A_lo": 0.694992,
+        "N-A_hi": 0.733359,
+        "recall": 0.402491,
+        "recall_lo": 0.389708,
+        "recall_hi": 0.414946,
+        "FPR": 0.04114,
+        "FPR_lo": 0.033562,
+        "FPR_hi": 0.04908
+      },
+      "LSTM+Lineage": {
+        "AUC": 0.678174,
+        "AUC_lo": 0.667495,
+        "AUC_hi": 0.688629,
+        "N-A": 0.726155,
+        "N-A_lo": 0.707384,
+        "N-A_hi": 0.744576,
+        "recall": 0.42904,
+        "recall_lo": 0.416421,
+        "recall_hi": 0.441495,
+        "FPR": 0.050523,
+        "FPR_lo": 0.042584,
+        "FPR_hi": 0.059184
+      }
+    },
+    "differences": {
+      "IF (counts) - IsolationForest | AUC": {
+        "mean": -0.035108,
+        "lo": -0.045822,
+        "hi": -0.023641
+      },
+      "IF (counts) - IsolationForest | N-A": {
+        "mean": 0.02278,
+        "lo": 0.010001,
+        "hi": 0.035731
+      },
+      "AE (counts) - Autoencoder | AUC": {
+        "mean": -0.013015,
+        "lo": -0.026261,
+        "hi": 0.000706
+      },
+      "AE (counts) - Autoencoder | N-A": {
+        "mean": 0.02188,
+        "lo": 0.00602,
+        "hi": 0.038791
+      },
+      "LSTM - IF (counts) | AUC": {
+        "mean": 0.067757,
+        "lo": 0.060649,
+        "hi": 0.075086
+      },
+      "LSTM - IF (counts) | N-A": {
+        "mean": 0.070637,
+        "lo": 0.061566,
+        "hi": 0.079993
+      },
+      "LSTM - AE (counts) | AUC": {
+        "mean": 0.040903,
+        "lo": 0.034063,
+        "hi": 0.048154
+      },
+      "LSTM - AE (counts) | N-A": {
+        "mean": 0.052425,
+        "lo": 0.041527,
+        "hi": 0.062466
+      }
+    }
+  },
+  "B8": {
+    "windows": {
+      "train": 2488,
+      "calibration": 2376,
+      "shell_heavy_runs": [
+        477,
+        417,
+        470
+      ],
+      "advanced_run3": 1416,
+      "original_normal_run3": 2301
+    },
+    "models": {
+      "IsolationForest": {
+        "FPR_shell_runs": [
+          0.184486,
+          0.182254,
+          0.146809
+        ],
+        "FPR_shell_all": 0.170821,
+        "AUC_shell_vs_adv3": 0.431951,
+        "AUC_orig3_vs_adv3": 0.667472
+      },
+      "Autoencoder": {
+        "FPR_shell_runs": [
+          0.100629,
+          0.091127,
+          0.102128
+        ],
+        "FPR_shell_all": 0.09824,
+        "AUC_shell_vs_adv3": 0.410627,
+        "AUC_orig3_vs_adv3": 0.684273
+      },
+      "LSTM": {
+        "FPR_shell_runs": [
+          0.442348,
+          0.450839,
+          0.455319
+        ],
+        "FPR_shell_all": 0.449413,
+        "AUC_shell_vs_adv3": 0.541665,
+        "AUC_orig3_vs_adv3": 0.736082
+      },
+      "LSTM+Lineage": {
+        "FPR_shell_runs": [
+          0.461216,
+          0.458034,
+          0.47234
+        ],
+        "FPR_shell_all": 0.464076,
+        "AUC_shell_vs_adv3": 0.542412,
+        "AUC_orig3_vs_adv3": 0.73499
+      }
+    }
+  }
+}

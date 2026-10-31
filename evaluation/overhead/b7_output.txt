@@ -1,0 +1,158 @@
+daemon binary: 2026-10-20 11:40:23.489874663 +0200   commit: ed04ae5
+cores: 8   window: 120s   runs: 5
+
+=== B7a: 5 repeated runs of measure_overhead.sh 120 ===
+
+--- run 1 of 5 ---
+cores: 8   measurement window: 120s per pass
+
+=== PASS 1: baseline (workload only, no daemon) ===
+baseline system CPU busy: 12.11%
+ovh_worker
+ovh_backend
+
+=== PASS 2: instrumented (workload + daemon) ===
+daemon pid: 60470
+ovh_worker
+ovh_backend
+
+=== RESULTS ===
+daemon own CPU (% of one core):        5.86%
+daemon own CPU (% of 8-core system): .732%
+baseline system busy:                  12.11%
+primary overhead figure = daemon own CPU as system %: .732%
+target: < 2%
+
+--- run 2 of 5 ---
+cores: 8   measurement window: 120s per pass
+
+=== PASS 1: baseline (workload only, no daemon) ===
+baseline system CPU busy: 17.6%
+ovh_worker
+ovh_backend
+
+=== PASS 2: instrumented (workload + daemon) ===
+daemon pid: 189650
+ovh_worker
+ovh_backend
+
+=== RESULTS ===
+daemon own CPU (% of one core):        5.68%
+daemon own CPU (% of 8-core system): .710%
+baseline system busy:                  17.6%
+primary overhead figure = daemon own CPU as system %: .710%
+target: < 2%
+
+--- run 3 of 5 ---
+cores: 8   measurement window: 120s per pass
+
+=== PASS 1: baseline (workload only, no daemon) ===
+baseline system CPU busy: 17.61%
+ovh_worker
+ovh_backend
+
+=== PASS 2: instrumented (workload + daemon) ===
+daemon pid: 319111
+ovh_worker
+ovh_backend
+
+=== RESULTS ===
+daemon own CPU (% of one core):        5.95%
+daemon own CPU (% of 8-core system): .743%
+baseline system busy:                  17.61%
+primary overhead figure = daemon own CPU as system %: .743%
+target: < 2%
+
+--- run 4 of 5 ---
+cores: 8   measurement window: 120s per pass
+
+=== PASS 1: baseline (workload only, no daemon) ===
+baseline system CPU busy: 17.75%
+ovh_worker
+ovh_backend
+
+=== PASS 2: instrumented (workload + daemon) ===
+daemon pid: 448553
+ovh_worker
+ovh_backend
+
+=== RESULTS ===
+daemon own CPU (% of one core):        5.67%
+daemon own CPU (% of 8-core system): .708%
+baseline system busy:                  17.75%
+primary overhead figure = daemon own CPU as system %: .708%
+target: < 2%
+
+--- run 5 of 5 ---
+cores: 8   measurement window: 120s per pass
+
+=== PASS 1: baseline (workload only, no daemon) ===
+baseline system CPU busy: 17.62%
+ovh_worker
+ovh_backend
+
+=== PASS 2: instrumented (workload + daemon) ===
+daemon pid: 578048
+ovh_worker
+ovh_backend
+
+=== RESULTS ===
+daemon own CPU (% of one core):        5.84%
+daemon own CPU (% of 8-core system): .730%
+baseline system busy:                  17.62%
+primary overhead figure = daemon own CPU as system %: .730%
+target: < 2%
+
+=== B7a SUMMARY ===
+ run    daemon, % of one CPU   daemon, % of system   baseline busy %
+   1                    5.86                 0.732             12.11
+   2                    5.68                 0.710             17.60
+   3                    5.95                 0.743             17.61
+   4                    5.67                 0.708             17.75
+   5                    5.84                 0.730             17.62
+  % of one CPU  mean 5.800  SD 0.121  min 5.670  max 5.950
+  % of system   mean 0.725  SD 0.015  min 0.708  max 0.743
+
+=== B7b: instrumented run, kernel.bpf_stats_enabled=1 ===
+kernel.bpf_stats_enabled = 1
+cores: 8   measurement window: 120s per pass
+
+=== PASS 1: baseline (workload only, no daemon) ===
+baseline system CPU busy: 18.3%
+ovh_worker
+ovh_backend
+
+=== PASS 2: instrumented (workload + daemon) ===
+daemon pid: 707577
+ovh_worker
+ovh_backend
+
+=== RESULTS ===
+daemon own CPU (% of one core):        5.69%
+daemon own CPU (% of 8-core system): .711%
+baseline system busy:                  18.3%
+primary overhead figure = daemon own CPU as system %: .711%
+target: < 2%
+kernel.bpf_stats_enabled = 0
+
+=== B7b SUMMARY: the daemon's eBPF programs (loaded after the start of this step) ===
+    id  name            type            run_cnt before  run_cnt after  run_time_ns before  run_time_ns after
+   327  sd_devices      cgroup_device                0              0                   0                  0
+   329  ?               cgroup_device                1              1                 538                538
+   330  sd_devices      cgroup_device                0              0                   0                  0
+   332  ?               cgroup_device             1051          24653              330427            7013329
+   334  trace_clone     tracepoint                 697          16792             3633088           86081579
+   335  trace_connect   tracepoint                 904          21864             3627138           85502691
+   336  trace_execve    tracepoint                 138           2876              669291           14229495
+   337  trace_openat    tracepoint                3695          80157             8545608          191699705
+   338  trace_ptrace    tracepoint                   0              0                   0                  0
+   339  trace_setuid    tracepoint                 281           6908             1062161           26067798
+
+measured interval between snapshots: 117.0 s
+programs: 10   total runs in interval: 146484   total run_time_ns in interval: 392726884
+mean cost per program run: 2681 ns
+kernel-side cost, % of system, measured interval: 0.0419%
+kernel-side cost, % of system, work-order formula run_time_ns / (120e9 x 8): 0.0409%
+note: enabling bpf_stats itself adds timing overhead to every program run.
+
+kernel.bpf_stats_enabled is now: 0

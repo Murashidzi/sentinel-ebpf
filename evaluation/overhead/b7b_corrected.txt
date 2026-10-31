@@ -1,0 +1,17 @@
+excluded, loaded meanwhile by other software (e.g. Docker device-cgroup programs): 327:sd_devices(cgroup_device), 329:?(cgroup_device), 330:sd_devices(cgroup_device), 332:?(cgroup_device)
+
+=== B7b SUMMARY: the daemon's eBPF programs (trace_* tracepoints) ===
+    id  name            type            run_cnt before  run_cnt after  run_time_ns before  run_time_ns after
+   334  trace_clone     tracepoint                 697          16792             3633088           86081579
+   335  trace_connect   tracepoint                 904          21864             3627138           85502691
+   336  trace_execve    tracepoint                 138           2876              669291           14229495
+   337  trace_openat    tracepoint                3695          80157             8545608          191699705
+   338  trace_ptrace    tracepoint                   0              0                   0                  0
+   339  trace_setuid    tracepoint                 281           6908             1062161           26067798
+
+measured interval between snapshots: 117.0 s
+programs: 6   total runs in interval: 122882   total run_time_ns in interval: 386043982
+mean cost per program run: 3142 ns
+kernel-side cost, % of system, measured interval: 0.0412%
+kernel-side cost, % of system, work-order formula run_time_ns / (120e9 x 8): 0.0402%
+note: enabling bpf_stats itself adds timing overhead to every program run.
